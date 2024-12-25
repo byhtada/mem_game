@@ -24,6 +24,7 @@ gem 'rest-client'
 gem 'roo'
 gem 'ffi', '~> 1.9', '>= 1.9.10'
 gem 'russian'
+gem 'rubyzip', '~> 2.3.0'
 
 
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
