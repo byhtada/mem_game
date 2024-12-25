@@ -22,7 +22,7 @@ gem 'active_model_serializers'
 
 gem 'rest-client'
 gem 'roo'
-gem 'ffi'
+gem 'ffi', '~> 1.9', '>= 1.9.10'
 gem 'russian'
 
 
