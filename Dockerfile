@@ -40,10 +40,8 @@ COPY . .
 RUN bundle exec bootsnap precompile app/ lib/
 
 # Adjust binfiles to be executable on Linux
-RUN chmod +x /app/bin/* && \
-    sed -i 's/ruby.exe/ruby/' /app/bin/* && \
-    sed -i '/^#!/aDir.chdir File.expand_path("..", __dir__)' /app/bin/*
-
+RUN sed -i 's/ruby.exe/ruby/' /app/bin/*
+RUN chmod +x /app/bin/*
 
 # Final stage for app image
 FROM base
