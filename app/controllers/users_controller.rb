@@ -10,4 +10,10 @@ class UsersController < ApplicationController
     @user.update(name: params[:name], ava: params[:ava])
     render json: { user: @user }
   end
+
+  def update_energy
+    @user.update(energy: params[:energy])
+
+    render json: {energy: @user.energy }
+  end
 end

@@ -7,7 +7,6 @@ development:
   <<: *default
   database: db/development_mem
   username: postgres
-  password: 240093
 
 # Warning: The database defined as "test" will be erased and
 # re-generated from your development database when you run "rake".
@@ -16,7 +15,6 @@ test:
   <<: *default
   database: db/test_mem
   username: postgres
-  password: 240093
 
 production:
   <<: *default

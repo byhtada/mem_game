@@ -1,150 +1,113 @@
 class GamesController < ApplicationController
+    READY_TO_START_DURATION = 10
+    READY_TO_RESTART_DURATION = 10
 
-    def start_game
-        game = Game.create
-        game.update(participants: params[:participants])
-    
-        game.update(uniq_id:  get_game_code(@user))
-        game_user = GameUser.create(user_id: @user.id,
-                                    user_name: @user.name,
-                                    user_ava: @user.ava,
-                                    game_id: game.id,
-                                    ready: false,
-                                    admin: true,
-                                    mem_names: get_mems_for_game)
-    
-        Thread.new do
-          sleep(1.5)
-          test_add_user_to_game(game, "Oleg")
-    
-          if params[:participants] >= 3
-            sleep(1.5)
-            test_add_user_to_game(game, "Anya")
-          end
-    
-          if params[:participants] >= 4
-            sleep(1.5)
-            test_add_user_to_game(game, "Anton")
-          end
-    
-          if params[:participants] >= 5
-            sleep(1.5)
-            test_add_user_to_game(game, "Vladimir Putin")
-          end
-    
+    def find_game
+        game = Game.where(state: 'registration', private: false).sample
+
+        if game.nil?
+            game = Game.create(participants: 4)
+            game = Game.create(participants: 4)
         end
+
+        game.join_to_game(@user)
     
-        render json: {game: game, admin: game_user.admin, user_id: @user.id}
+        render json: {game: game, user_id: @user.id}
+    end
+
+    def create_game
+        game = Game.create(
+            private: true,
+            participants: params[:participants],
+            uniq_id:  Game.get_uniq_id
+        )
+
+        game.join_to_game(@user)
+    
+        render json: {game: game, user_id: @user.id}
     end
 
     def join_to_game
-        game = Game.find_by(uniq_id: params[:game_code])
+        game = Game.find_by(uniq_id: params[:game_code], state: 'registration', private: true)
     
-        game_user = GameUser.create(user_id:     @user.id,
-                                       user_name:      @user.name,
-                                       user_ava: @user.ava,
-                                       game_id: game.id,
-                                       ready: true,
-                                       admin: true,
-                                       mem_names: get_mems_for_game)
-    
-        render json: {game: game, admin: game_user.admin, user_id: @user.id}
-    end
-    
+        if game.present?
+            game.join_to_game(@user)
+            render json: {game: game, user_id: @user.id}
+        else
+            render json: {error: 'Игра не найдена'}
+        end
+    end 
     
     def get_update_game_ready
         game = Game.find(params[:game_id])
-        users = game.users
+        users = GameUsersService.new(game, @user).call
     
-        if game.ready_to_start
-            users.each_with_index do |user, i|
-                user.update(game_user_number: i)
-            end
-      
-            game.create_round
-        end
+        ready_progress_wait = 100 - (100 * (Time.now.to_i - game.updated_at.to_i).to_f / READY_TO_START_DURATION).to_i
         
         render json: {
           ready_to_start: game.ready_to_start,
-          admin:          true,
+          ready_progress_wait: ready_progress_wait,
           users:          users,
           game:           game,
           my_mems:        [],
         }
     end
     
-    def ready_for_game
-        GameUser.find_by(game_id: params[:game_id], user_id: @user.id).update(ready: true)
-    
-        Thread.new do
-          sleep(1)
-          GameUser.where(game_id: params[:game_id]).first.update(ready: true)
-          sleep(1)
-          GameUser.where(game_id: params[:game_id]).second.update(ready: true)
-          sleep(1)
-          GameUser.where(game_id: params[:game_id]).update_all(ready: true)
-        end
-    
-    
-        render json: {}
-    end
-    
     def get_game_winner
         game = Game.find(params[:game_id])
-        users = get_game_users(game, true)
-        winner = GameUser.where(game_id: params[:game_id]).sort{|f,s| f.game_points <=> s.game_points}.last
+        users = game.users
+        winner = GameUser.where(game_id: game.id).sort{|f,s| f.game_points <=> s.game_points}.last
     
         render json: {
           users: users,
-          winner_id: winner.user_id
+          winner_id: winner.game_user_number
         }
     end
 
+    def get_restart_update
+        game = Game.find(params[:game_id])
+        users = GameUsersService.new(game, @user).call
 
-    def create_test_game
-        game = Game.create
-        game.update(participants: 2)
-    
-        user = User.find_by(name: "Oleg")
-    
-        game.update(uniq_id: get_game_code(user) )
-        game_user = GameUser.create(user_id:     user.id,
-                                    user_name:   user.name,
-                                    user_ava: user.ava,
-                                    game_id: game.id,
-                                    ready: true,
-                                    admin: true,
-                                    mem_names: get_mems_for_game)
-    
-        render json: {game_code: game.uniq_id}
-    end
+        restart_progress_wait = 100 - (100 * (Time.now.to_i - game.updated_at.to_i).to_f / READY_TO_RESTART_DURATION).to_i
+        new_game = nil
 
-    private
+        if restart_progress_wait.negative? || game.users.select {|u| u.ready_to_restart}.count == game.participants
+            if game.state != 'close'
+                new_game = Game.create(participants: 4)
 
-    def test_add_user_to_game(game, name)
-        mem_user = User.find_by(name: name)
-    
-        game_user = GameUser.create(user_id:     mem_user.id,
-                                       user_name:   mem_user.name,
-                                       user_ava: mem_user.ava,
-                                       game_id:  game.id,
-                                       mem_names:    get_mems_for_game)
-        Thread.new do
-          sleep(2)
-          game_user.update(ready: true)
+                game.users.each do |user|
+                    next unless user.ready_to_restart
+
+                    new_game.join_to_game(User.find(user.user_id))
+                end
+                
+                game.update(state: 'close')
+                new_game.update(state: 'playing') if new_game.participants == new_game.users.count
+            end
         end
-    end
-    
-    def get_mems_for_game
-        names = Mem.pluck(:name).sample(3)
-        mem_names = []
-        names.each do |m|
-          mem_names.append({name: m, active: true})
-        end
-        JSON.dump(mem_names)
+
+        new_game = Game.find(GameUser.where(user_id: @user.id).last.game_id)
+
+        winner = GameUser.where(game_id: game.id).sort{|f,s| f.game_points <=> s.game_points}.last
+
+        render json: {
+            restart_progress_wait: restart_progress_wait,
+            ready_to_start: game.reload.state == 'close',
+            users: users,
+            new_game: new_game,
+            game: game,
+            user_id: @user.id,
+            winner_id: winner.game_user_number
+        }
     end
 
-    def get_game_code(user)
-        (Time.now.to_i.to_s.last(3) + user.id.to_s).to_i
-    end    
+    def ready_to_restart
+        game = Game.find(params[:game_id])
+        game_user = GameUser.find_by(user_id: @user.id, game_id: game.id)
+        game_user.update(ready_to_restart: true)
+
+        render json: {}
+    end
+
+ 
 end

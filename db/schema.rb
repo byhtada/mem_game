@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2024_10_20_135004) do
+ActiveRecord::Schema[7.1].define(version: 2024_12_22_192645) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -21,11 +21,10 @@ ActiveRecord::Schema[7.1].define(version: 2024_10_20_135004) do
     t.integer "user_id"
     t.string "user_name"
     t.string "user_ava"
-    t.boolean "ready", default: false
-    t.boolean "admin", default: false
     t.string "mem_names", default: ""
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "ready_to_restart", default: false
     t.index ["game_id"], name: "index_game_users_on_game_id"
   end
 
@@ -33,10 +32,11 @@ ActiveRecord::Schema[7.1].define(version: 2024_10_20_135004) do
     t.integer "uniq_id"
     t.integer "participants", default: 4
     t.integer "current_round", default: 0
-    t.boolean "active", default: true
     t.string "type"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "state", default: "registration"
+    t.boolean "private", default: false
   end
 
   create_table "mems", force: :cascade do |t|
@@ -77,8 +77,23 @@ ActiveRecord::Schema[7.1].define(version: 2024_10_20_135004) do
     t.decimal "mem_4_time", default: "0.0"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "state", default: "play"
     t.index ["game_id", "round_num"], name: "index_rounds_on_game_id_and_round_num", unique: true
     t.index ["game_id"], name: "index_rounds_on_game_id"
+  end
+
+  create_table "tournament_users", force: :cascade do |t|
+    t.integer "user_id"
+    t.integer "tournament_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "tournaments", force: :cascade do |t|
+    t.datetime "start"
+    t.boolean "active"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "users", force: :cascade do |t|
@@ -88,6 +103,9 @@ ActiveRecord::Schema[7.1].define(version: 2024_10_20_135004) do
     t.string "auth_token"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.float "energy", default: 250.0
+    t.integer "coins", default: 75
+    t.boolean "premium", default: false
   end
 
 end
