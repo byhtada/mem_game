@@ -1,0 +1,9 @@
+meta:
+  environment: ruby
+  toolchain:
+    name: bundle
+    version: "3.0"
+build: {}
+run:
+  persistenceMount: /data
+  containerPort: "80"
