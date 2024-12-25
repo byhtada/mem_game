@@ -279,7 +279,6 @@ DEPENDENCIES
   rails_12factor
   rest-client
   roo
-  rubyzip (~> 2.3.0)
   russian
   telegram-bot-ruby
   tzinfo-data
