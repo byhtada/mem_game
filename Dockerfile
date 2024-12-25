@@ -42,8 +42,7 @@ RUN bundle exec bootsnap precompile app/ lib/
 # Adjust binfiles to be executable on Linux
 RUN chmod +x bin/* && \
     sed -i "s/\r$//g" bin/* && \
-    sed -i 's/ruby\r$/ruby/' bin/* && \
-    sed -i 's/ruby\.exe\r$/ruby/' bin/*
+    sed -i 's/ruby\r$/ruby/' bin/*
 
 
 # Final stage for app image
