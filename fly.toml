@@ -1,16 +1,16 @@
-# fly.toml app configuration file generated for memgame-api-divine-sky-9402 on 2024-12-26T02:28:02+03:00
+# fly.toml app configuration file generated for memgame-api-dark-glade-3214 on 2024-12-26T02:40:50+03:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'memgame-api-divine-sky-9402'
+app = 'memgame-api-dark-glade-3214'
 primary_region = 'waw'
 console_command = '/rails/bin/rails console'
 
 [build]
 
 [deploy]
-  release_command = "./bin/rails db:prepare"
+  release_command = './bin/rails db:prepare'
 
 [http_service]
   internal_port = 3000
