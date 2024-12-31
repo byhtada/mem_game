@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 class RoundsController < ApplicationController
-  ROUND_DURATION = 120
+  ROUND_DURATION = 1200
   VOTE_DURATION = 10
-  ROUNDS = 3
+  ROUNDS = 1
 
   def get_round_update
     game  = Game.find(params[:game_id])
@@ -89,7 +89,7 @@ class RoundsController < ApplicationController
     if finish_round && round.state == 'vote'
       round.update(state: 'close')
 
-      if round.round_num == ROUNDS
+      if round.round_num >= ROUNDS
         finish_game = true
         game.update(state: 'finishing')
       else

@@ -12,6 +12,9 @@ class Game < ApplicationRecord
   }
 
   def join_to_game(user)
+    return false if user.energy - 50 < 0
+    user.update(energy: user.energy - 50)
+
     GameUser.create(
       user_id:    user.id,
       user_name:  user.name,

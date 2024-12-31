@@ -12,7 +12,10 @@ class UsersController < ApplicationController
   end
 
   def update_energy
-    @user.update(energy: params[:energy])
+    energy = params[:energy]
+    energy = @user.energy_max if energy > @user.energy_max
+
+    @user.update(energy: energy)
 
     render json: {energy: @user.energy }
   end

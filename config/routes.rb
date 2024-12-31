@@ -25,4 +25,5 @@ Rails.application.routes.draw do
   post :test_send_round_mems, controller: 'test'
   post :test_round_vote, controller: 'test'
   post :test_create_private_game,   controller: 'test'
+  post :update_mems, controller: 'test'
 end

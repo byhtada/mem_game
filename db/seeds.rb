@@ -53,9 +53,6 @@ questions.each do |q|
   Question.create(style: q[:style], text: q[:text])
 end
 
-mems.each do |mem|
-  Mem.create(name: mem[:name])
-end
 
 question = [
   {style: "love_is", adult: true, text: "Когда ты казах. Фанатки k-pop be like",},

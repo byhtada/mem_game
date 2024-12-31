@@ -94,7 +94,29 @@ class TestController < ApplicationController
     render json: { game_code: game.uniq_id }
   end
 
+  def update_mems
+    ignored = [9]
+
+    i = 0
+    while i < params[:last_num].to_i
+      i += 1
+      next if ignored.include? (i)
+
+      mem_name = "mem_#{get_mem_number(i)}"
+
+      if Mem.find_by(name: mem_name).nil?
+        Mem.create(name: mem_name)
+      end      
+    end
+  end
+
   private
+
+  def get_mem_number(num)
+    num.to_s.rjust(3, '0')
+  end
+
+
 
   def test_add_user_to_game(game, name)
     mem_user = User.find_by(name: name)

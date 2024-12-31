@@ -1,17 +1,17 @@
 class GamesController < ApplicationController
-    READY_TO_START_DURATION = 10
-    READY_TO_RESTART_DURATION = 10
+    READY_TO_START_DURATION = 1000
+    READY_TO_RESTART_DURATION = 1000
 
     def find_game
         game = Game.where(state: 'registration', private: false).sample
 
         if game.nil?
             game = Game.create(participants: 4)
-            game = Game.create(participants: 4)
+           # game = Game.create(participants: 4)
         end
 
         game.join_to_game(@user)
-    
+
         render json: {game: game, user_id: @user.id}
     end
 
@@ -60,7 +60,8 @@ class GamesController < ApplicationController
     
         render json: {
           users: users,
-          winner_id: winner.game_user_number
+          winner_id: winner.game_user_number,
+          winner_name: winner.user_name
         }
     end
 
@@ -108,6 +109,4 @@ class GamesController < ApplicationController
 
         render json: {}
     end
-
- 
 end
