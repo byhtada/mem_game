@@ -35,7 +35,7 @@ class ApplicationController < ActionController::API
 
     def set_webhook
       params = { 
-        url: "https://memgame-api.fly.dev/telegram_callback"
+        url: "https://teremok.space/telegram_callback"
       }
 
       response =  telegram_request("setWebhook", params)
