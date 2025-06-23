@@ -1,0 +1,351 @@
+@import url("bottom_bar.css?v.016");
+@import url("pages_and_containers.css?v.016");
+@import url("elements.css?v.016");
+
+:root {
+  --accent-color: #FF7F5C;
+  --second-color: #555555;
+
+  --container-color: #141414;
+}
+.orange {
+  color: var(--accent-color)
+}
+.grey {
+  color: var(--second-color)
+}
+#current_dollars {
+  font-size: 12px;
+}
+
+html {
+  background-color: #000000;
+  background: linear-gradient(rgba(0, 0, 0, .88), rgba(0, 0, 0, .88)), url('/assets/backgrounds/back_2.jpeg');
+  overflow: hidden;
+}
+
+body {
+  font:  14px "Lucida Grande", "Lucida Sans Unicode", Arial, Helvetica, Verdana, sans-serif;
+  color: white;
+  padding: 0 24px;
+  margin: 0px;
+  overflow-x: hidden;
+  overflow-y: scroll;
+  height: 100vh;
+}
+
+video::-webkit-media-controls {
+  display: none;
+}
+video {
+  pointer-events: none;
+}
+
+#div_btns_invite {
+  display: none;
+}
+
+#div_tournament_registered {
+  display: none;
+}
+
+#user_ava {
+  margin-right: 10px;
+  width: 33px;
+}
+
+#game_winner {
+  color: var(--accent-color);
+  margin-bottom: 30px;
+  padding-top: 10px;
+}
+
+#container_game_participants {
+  display: none;
+}
+#btns_game_participants {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+#game_participants {
+  font-size: 32px;
+  align-content: center;
+  margin-top: 20px;
+  margin-left: 50px;
+  margin-right: 50px;
+}
+
+#container_game_code {
+  display: none;
+}
+input {
+  border: 1px solid white;
+  border-radius: 8px;
+  font-size: 26px;
+  padding: 15px;
+  color: white;
+  background-color: #000000bf;
+  margin-top: 20px;
+  width: -webkit-fill-available;
+  text-align: center;
+}
+#input_user_nick {
+  margin-left: 20px;
+  margin-right: 20px;
+  margin-top: 0px;
+  padding: 10px;
+}
+
+
+.img_covers {
+  width: -moz-available;
+  width: -webkit-fill-available;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+
+
+
+#container_avatars {
+  display: flex;
+  flex-wrap: wrap;
+}
+#container_avatars img {
+  width:  50px;
+  height: 50px;
+  border-radius: 16px;
+  border: 1px solid transparent;
+  margin-right: 5px;
+  margin-left: 5px;
+  margin-bottom: 10px;
+  flex: 1;
+}
+
+#container_avatars img.selected {
+  border: 1px solid orange;
+}
+
+.bottom_container {
+  margin-top: 100px;
+  display: none;
+  width: 100%;
+}
+
+
+
+
+
+
+
+
+
+
+
+.div_players {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+
+  width: -moz-available;
+  width: -webkit-fill-available;
+
+  position: fixed;
+  top: 0;
+  left: 0;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+  background-color: var(--container-color);
+  padding: 20px;
+  box-shadow: 5px 5px 15px rgba(255, 127, 92, 0.624);
+}
+.div_players .div_player:first-child {
+  border-right: 1px solid #ff7f5c96;
+}
+
+.div_player {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+.div_player.wait {
+  color: #888888;
+}
+.div_player.winner {
+  color: orange;
+}
+
+.div_player img {
+  width: 35px;
+  height: 35px;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  border-radius: 4px;
+}
+.div_player .user_name {
+  font-size: 12px;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.div_player .new_points {
+  color: #888888;
+}
+
+
+.div_play_field {
+  margin-top: 140px;
+  padding-bottom: 150px;
+  /*overflow-y: scroll;*/
+}
+
+
+#game_question {
+  padding: 12px 25px;
+  text-align: center;
+}
+
+#progress_comment {
+  text-align: center;
+  font-size: 12px;
+  color: #888888;
+  margin: 8px;
+}
+
+#container_progress_line {
+  padding: 0 25px;
+}
+#progress_line {
+  width: 0%;
+  height: 4px;
+  border-radius: 4px;
+  background-color: var(--accent-color);
+}
+
+#div_my_mems {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: -webkit-fill-available;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  background-color: var(--container-color);
+  box-shadow: 0 -5px 10px rgba(255, 127, 92, 0.624);
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  justify-content: center;
+
+  padding: 10px;
+}
+.mem_card {
+  position: relative;
+  margin-top:10px;
+  margin-left: 5px;
+  margin-right: 5px;
+  border-radius: 4px;
+}
+.mem_card img {
+  border-radius: 4px;
+}
+.mem_card[data-active="true"] {
+  border-radius: 50%;
+}
+.mem_inactive {
+  position: absolute;
+  top:0;
+  left:0;
+  background-color: rgba(0, 0, 0, 0.72);
+  height: 50px;
+  width: 100%;
+}
+
+#div_my_mems img {
+  height: 50px;
+
+}
+
+
+
+#div_video {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 70px;
+  margin-left: 20px;
+  margin-right: 20px;
+}
+
+#div_round_result {
+  display: none;
+  margin-top: 20px;
+}
+.div_mem {
+  display: none;
+  flex-direction: row;
+  align-items: end;
+  margin-bottom: 15px;
+}
+.div_mem.my {
+  flex-direction: row-reverse;
+}
+
+.div_mem .user_avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+}
+.container_video_mem {
+  background-color: var(--container-color);
+  border: 1px solid transparent;
+  box-shadow: 0px 0px 15px var(--second-color);
+
+  padding: 10px;
+  padding-top: 5px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+}
+.container_video_mem.voted {
+  border: 1px solid var(--accent-color);
+  box-shadow: 0px 0px 15px var(--accent-color);
+}
+
+.mem_sender_name {
+  margin-bottom: 3px;
+  font-size: 14px;
+}
+
+.container_video_img {
+  display: flex;
+  flex-direction: column;
+  margin-right: 5px;
+  margin-left: 5px;
+  align-items: center;
+}
+.container_video_img .mem_vote {
+  width: 25px;
+  height: 25px;
+  margin-bottom: 10px;
+}
+
+
+
+
+
+
+
+
+.div_clicker_energy {
+  
+  img {
+    width: 15px;
+    height: 15px;
+  }
+}
+
+
+
+

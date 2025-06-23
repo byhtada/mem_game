@@ -6,7 +6,7 @@ class Initial < ActiveRecord::Migration[7.1]
       t.string :name, default: ''
       t.string :ava,  default: ''
 
-      t.integer :tg_id
+      t.bigint :tg_id
 
       t.string :auth_token
       t.timestamps

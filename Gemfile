@@ -25,6 +25,11 @@ gem 'roo'
 gem 'ffi', '~> 1.9', '>= 1.9.10'
 gem 'russian'
 
+gem 'delayed_job_active_record'
+gem 'daemons'
+gem 'sidekiq'
+gem 'dotenv-rails'
+
 
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
 # gem "jbuilder"

@@ -9,23 +9,27 @@ LABEL fly_launch_runtime="rails"
 # Rails app lives here
 WORKDIR /rails
 
-# Set production environment
-ENV BUNDLE_DEPLOYMENT="1" \
-    BUNDLE_PATH="/usr/local/bundle" \
-    BUNDLE_WITHOUT="development:test" \
-    RAILS_ENV="production"
+# Set development environment
+ENV BUNDLE_PATH="/usr/local/bundle" \
+    RAILS_ENV="development"
 
 # Update gems and bundler
 RUN gem update --system --no-document && \
     gem install -N bundler
 
-
 # Throw-away build stage to reduce size of final image
 FROM base AS build
 
-# Install packages needed to build gems
+# Install packages needed to build gems and Node.js
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential libpq-dev
+    apt-get install --no-install-recommends -y \
+    build-essential \
+    libpq-dev \
+    curl \
+    gnupg2 && \
+    curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y nodejs && \
+    rm -rf /var/lib/apt/lists/*
 
 # Install application gems
 COPY Gemfile Gemfile.lock ./
@@ -36,14 +40,23 @@ RUN bundle install && \
 # Copy application code
 COPY . .
 RUN sed -i 's/ruby\.exe\r$/ruby/' bin/*
-RUN chmod +x /bin/*
+RUN chmod +x bin/*
+
+# Install frontend dependencies and build
+COPY memgame_web/package*.json ./memgame_web/
+RUN cd memgame_web && npm ci
+RUN cd memgame_web && npm run build
+
+# Copy built frontend to public
+RUN cp -r memgame_web/dist/* public/ && \
+    cp -r memgame_web/assets public/ && \
+    cp -r memgame_web/libs public/
+
+# Clean up npm cache
+RUN cd memgame_web && npm cache clean --force && rm -rf node_modules
 
 # Precompile bootsnap code for faster boot times
 RUN bundle exec bootsnap precompile app/ lib/
-
-# Adjust binfiles to be executable on Linux
-
-
 
 # Final stage for app image
 FROM base
@@ -60,12 +73,10 @@ COPY --from=build /rails /rails
 # Run and own only the runtime files as a non-root user for security
 RUN groupadd --system --gid 1000 rails && \
     useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash && \
-    chown -R 1000:1000 db log storage tmp
+    chown -R 1000:1000 db log storage tmp bin && \
+    chmod +x /rails/bin/*
 USER 1000:1000
-
-# Entrypoint sets up the container.
-ENTRYPOINT ["/rails/bin/docker-entrypoint"]
 
 # Start the server by default, this can be overwritten at runtime
 EXPOSE 3000
-CMD ["./bin/rails", "server"]
+CMD ["./bin/rails", "server", "-b", "0.0.0.0"]

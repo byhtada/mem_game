@@ -10,9 +10,24 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2024_12_28_110623) do
+ActiveRecord::Schema[7.1].define(version: 2025_04_13_194728) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "delayed_jobs", force: :cascade do |t|
+    t.integer "priority", default: 0, null: false
+    t.integer "attempts", default: 0, null: false
+    t.text "handler", null: false
+    t.text "last_error"
+    t.datetime "run_at"
+    t.datetime "locked_at"
+    t.datetime "failed_at"
+    t.string "locked_by"
+    t.string "queue"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.index ["priority", "run_at"], name: "delayed_jobs_priority"
+  end
 
   create_table "game_users", force: :cascade do |t|
     t.integer "game_id"
@@ -25,6 +40,7 @@ ActiveRecord::Schema[7.1].define(version: 2024_12_28_110623) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "ready_to_restart", default: false
+    t.boolean "bot", default: false
     t.index ["game_id"], name: "index_game_users_on_game_id"
   end
 
@@ -96,10 +112,18 @@ ActiveRecord::Schema[7.1].define(version: 2024_12_28_110623) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "user_friends", force: :cascade do |t|
+    t.integer "user_id"
+    t.integer "friend_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_user_friends_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "name", default: ""
     t.string "ava", default: ""
-    t.integer "tg_id"
+    t.bigint "tg_id"
     t.string "auth_token"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -107,6 +131,11 @@ ActiveRecord::Schema[7.1].define(version: 2024_12_28_110623) do
     t.integer "coins", default: 75
     t.boolean "premium", default: false
     t.float "energy_max", default: 250.0
+    t.boolean "registered_in_tournament", default: false
+    t.string "source_channel"
+    t.string "source_id"
+    t.boolean "bot", default: false
+    t.index ["source_channel"], name: "index_users_on_source_channel"
   end
 
 end

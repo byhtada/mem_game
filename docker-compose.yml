@@ -1,0 +1,93 @@
+services:
+  # База данных PostgreSQL
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: memgame_development
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis для Sidekiq
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Rails приложение
+  web:
+    build: .
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://postgres:password@db:5432/memgame_development
+      REDIS_URL: redis://redis:6379/0
+      RAILS_ENV: development
+      RAILS_MAX_THREADS: 5
+    volumes:
+      - .:/rails
+      - bundle_cache:/usr/local/bundle
+    command: >
+      bash -c "
+        bundle exec rails db:create || true &&
+        bundle exec rails db:migrate &&
+        bundle exec rails db:seed &&
+        bundle exec rails server -b 0.0.0.0
+      "
+
+  # Sidekiq для фоновых задач
+  sidekiq:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://postgres:password@db:5432/memgame_development
+      REDIS_URL: redis://redis:6379/0
+      RAILS_ENV: development
+      TELEGRAM_BOT_TOKEN: "123456789:AAAA-fake-token-for-development"
+    volumes:
+      - .:/rails
+      - bundle_cache:/usr/local/bundle
+    command: ["bundle", "exec", "sidekiq"]
+
+  # Frontend watcher для автоматической пересборки
+  frontend_watcher:
+    image: node:18-alpine
+    working_dir: /app
+    volumes:
+      - ./memgame_web:/app
+      - ./public:/output
+      - node_modules_cache:/app/node_modules
+    command: sh -c "npm install && npm run watch-and-copy"
+    depends_on:
+      - web
+
+volumes:
+  postgres_data:
+  redis_data:
+  bundle_cache:
+  node_modules_cache: 

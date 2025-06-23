@@ -1,10 +1,6 @@
 # frozen_string_literal: true
 
 class RoundsController < ApplicationController
-  ROUND_DURATION = 1200
-  VOTE_DURATION = 10
-  ROUNDS = 1
-
   def get_round_update
     game  = Game.find(params[:game_id])
     round = Round.find_by(game_id: game.id, round_num: game.current_round)
@@ -13,8 +9,11 @@ class RoundsController < ApplicationController
     my_mems = JSON.parse(GameUser.find_by(user_id: @user.id, game_id: params[:game_id]).mem_names)
     
     mems = get_round_mems(game, round)
-    round_progress_wait = 100 - (100 * (Time.now.to_i - round.created_at.to_i).to_f / ROUND_DURATION).to_i
+    puts "mems #{mems}"
+    round_progress_wait = round.round_progress_wait
     
+  
+
     if round_progress_wait.negative? && round.state == 'play'
       5.times do |i|
         next if round["mem_#{i}_name"] != ''
@@ -32,7 +31,9 @@ class RoundsController < ApplicationController
 
     ready_to_open = mems.length == game.participants
     
-    round.update(state: 'vote') if ready_to_open
+    if ready_to_open
+      round.update(state: 'vote')
+    end
 
     render json: {
       ready_to_open:,
@@ -49,19 +50,7 @@ class RoundsController < ApplicationController
     game  = Game.find(params[:game_id])
     round = Round.find_by(game_id: game.id, round_num: game.current_round)
 
-    user_in_game = GameUser.find_by(game_id: params[:game_id], user_id: @user.id)
-    user_number = user_in_game.game_user_number
-
-    new_user_mems = []
-    JSON.parse(user_in_game.mem_names).each do |mem|
-      new_mem = { name: mem['name'], active: mem['active'] }
-      new_mem[:active] = false if params[:mem_name] == mem['name']
-      new_user_mems.append(new_mem)
-    end
-    user_in_game.update(mem_names: JSON.dump(new_user_mems))
-
-    round.update("mem_#{user_number}_name": params[:mem_name],
-                 "mem_#{user_number}_time": Time.now.to_f)
+    round.send_mem(@user.id, params[:mem_name])
 
     render json: {}
   end
@@ -69,7 +58,17 @@ class RoundsController < ApplicationController
 
   def start_voting
     round = Round.find(params[:round_id])
-    round.update(start_voting: Time.now.to_i, state: 'vote') if round.start_voting == 0
+    if round.start_voting == 0
+      round.update(start_voting: Time.now.to_i, state: 'vote') 
+      
+      round.game.game_users.where(bot: true).each do |user|
+        min = ::Round::VOTE_DURATION * 0.1
+        max = ::Round::VOTE_DURATION * 0.5
+        delay = rand(min..max)
+        BotVoteJob.set(wait: delay.seconds).perform_later(round.id)
+      end
+    end
+
     render json: {}
   end
 
@@ -78,7 +77,7 @@ class RoundsController < ApplicationController
     round = Round.find_by(game_id: game.id, round_num: game.current_round)
     users = GameUsersService.new(game, @user).call
     
-    vote_progress_wait = 100 - (100 * (Time.now.to_i - round.start_voting).to_f / VOTE_DURATION).to_i
+    vote_progress_wait = round.vote_progress_wait
 
     mems, total_votes = get_round_votes(round, users)
 
@@ -89,9 +88,10 @@ class RoundsController < ApplicationController
     if finish_round && round.state == 'vote'
       round.update(state: 'close')
 
-      if round.round_num >= ROUNDS
+      if round.round_num >= Game::ROUNDS
         finish_game = true
-        game.update(state: 'finishing')
+        CalculateRoundResultService.new(game).call
+        game.finish_game
       else
         create_round(game) 
         round = Round.find_by(game_id: game.id, round_num: game.current_round)
@@ -122,7 +122,7 @@ class RoundsController < ApplicationController
   private
 
   def create_round(game)
-    finish_game = game.current_round >= ROUNDS
+    finish_game = game.current_round >= Game::ROUNDS
 
     CalculateRoundResultService.new(game).call
 
@@ -158,7 +158,7 @@ class RoundsController < ApplicationController
 
     mems = []
     5.times do |i|
-      next unless round[:"mem_#{i}_name"] != ''
+      next if round[:"mem_#{i}_name"] == ''
 
       user = users.select { |mem_game_user| mem_game_user.game_user_number == i }.first
       mems.append({ mem: round[:"mem_#{i}_name"],
@@ -171,5 +171,4 @@ class RoundsController < ApplicationController
 
     mems = mems.sort { |f, s| f[:time] <=> s[:time] }
   end
-
 end

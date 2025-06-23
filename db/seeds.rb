@@ -1,35 +1,19 @@
-@avatars = %w[
-    boss
-    fu
-    alone
-    uuu
-    after
-    excited
-    hearts
-    lauging
-    shock
-    sleep
-    tong
-    train
-    angel
-    angry
-    bad
-    blushing
-    bored
-    alien
-    boss_glass
-    cry
-    disappointed
-  ]
+@avatars = [1,2,10,11,13,15,17,20,29,32,37,42,43,50,51,
+  54,57,62,70,75,
+  77,85,88,105,114
+ ]
 
 User.all.destroy_all
 user = User.create(name: "Sanya", ava: @avatars.sample(1).first)
-user.update(auth_token: "123")
+user.update(auth_token: "123", tg_id: 317600571)
 
-User.create(name: "Oleg",           ava: @avatars.sample(1).first)
-User.create(name: "Anya",           ava: @avatars.sample(1).first)
-User.create(name: "Anton",          ava: @avatars.sample(1).first)
-User.create(name: "Vladimir Putin", ava: @avatars.sample(1).first)
+User.create(name: "Nagibator777",           ava: @avatars.sample(1).first)
+User.create(name: "Евгений",           ava: @avatars.sample(1).first)
+User.create(name: "Пидрило",          ava: @avatars.sample(1).first)
+
+10.times do |i|
+  User.create(name: "Bot #{i}", ava: @avatars.sample(1).first, bot: true)
+end
 
 mems      = [
   {name: "advokat"},
@@ -263,3 +247,21 @@ question.each do |q|
     adult: q[:adult],
     text:  q[:text],)
 end
+
+
+def update_mems(last_num)
+  ignored = [9]
+
+  i = 0
+  while i < last_num.to_i
+    i += 1
+    next if ignored.include? (i)
+
+    mem_name = "mem_#{i.to_s.rjust(3, '0')}"
+
+    if Mem.find_by(name: mem_name).nil?
+      Mem.create(name: mem_name)
+    end      
+  end
+end
+update_mems(81)

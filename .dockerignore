@@ -35,3 +35,17 @@
 /app/assets/builds/*
 !/app/assets/builds/.keep
 /public/assets
+
+# Additional files and directories
+.gitignore
+README.md
+Dockerfile
+.env
+.env.example
+tmp/*
+log/*
+node_modules
+memgame_web/node_modules
+memgame_web/dist
+coverage
+.nyc_output
