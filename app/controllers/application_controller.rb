@@ -39,6 +39,7 @@ class ApplicationController < ActionController::API
       }
 
       response =  telegram_request("setWebhook", params)
+      puts "RESPONCE #{response}"
       render json: {link: response["result"] }
     end
 
