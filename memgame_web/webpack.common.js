@@ -7,6 +7,7 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, 'dist'),
     clean: true,
-    filename: './js/app.js',
+    filename: './js/[name].[contenthash].js',
+    assetModuleFilename: 'assets/[hash][ext][query]'
   },
 };

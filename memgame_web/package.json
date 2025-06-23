@@ -12,9 +12,12 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "webpack serve --open --config webpack.config.dev.js",
+    "prebuild": "node update-version.js",
     "build": "webpack --config webpack.config.prod.js",
     "watch": "webpack --config webpack.config.watch.js --watch",
-    "watch-and-copy": "npm run watch"
+    "watch-and-copy": "npm run watch",
+    "version-update": "node update-version.js",
+    "bump-css": "node bump-css-version.js"
   },
   "devDependencies": {
     "copy-webpack-plugin": "^11.0.0",

@@ -19,6 +19,8 @@ help:
 	@echo "  restart        - Перезапустить приложение"
 	@echo "  status         - Показать статус контейнеров"
 	@echo "  frontend       - Пересобрать фронтенд"
+	@echo "  frontend-update - Обновить версии и пересобрать фронтенд"
+	@echo "  bump-css       - Увеличить версию CSS файла"
 	@echo ""
 	@echo "Production команды:"
 	@echo "  prod-build     - Собрать образы для продакшена"
@@ -34,6 +36,7 @@ help:
 	@echo "  ssl-check      - Проверить SSL сертификаты"
 	@echo "  ssl-update     - Обновить SSL сертификаты"
 	@echo "  deploy         - Полное развертывание в продакшен"
+	@echo "  deploy-quick   - Быстрое обновление с версионностью"
 
 # Development команды
 build:
@@ -76,6 +79,15 @@ status:
 # Пересборка фронтенда
 frontend:
 	$(DOCKER_COMPOSE) exec web bash -c "cd memgame_web && npm run build && cp -r dist/* ../public/ && cp -r assets ../public/ && cp -r libs ../public/"
+
+# Обновление версий и пересборка фронтенда
+frontend-update:
+	cd memgame_web && npm run version-update
+	$(DOCKER_COMPOSE) exec web bash -c "cd memgame_web && npm run build && cp -r dist/* ../public/ && cp -r assets ../public/ && cp -r libs ../public/"
+
+# Увеличение версии CSS
+bump-css:
+	cd memgame_web && npm run bump-css
 
 # Production команды
 prod-build:
@@ -227,6 +239,14 @@ deploy: prod-build
 	@echo ""
 	@echo "🎉 Развертывание завершено!"
 	@echo "🌐 Приложение доступно по адресу: https://$(DOMAIN)"
+
+# Быстрое развертывание с обновлением версий
+deploy-quick: 
+	@echo "🚀 Быстрое обновление с версионностью..."
+	cd memgame_web && npm run version-update
+	make prod-build
+	$(DOCKER_COMPOSE_PROD) up -d
+	@echo "✅ Быстрое обновление завершено!"
 
 # Очистка
 clean:
