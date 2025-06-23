@@ -140,6 +140,16 @@ https://t.me/mem_culture_bot?start=in_#{@user.tg_id}"
     end
 
 
+    def health
+      render json: { 
+        status: 'ok', 
+        timestamp: Time.current.iso8601,
+        version: Rails.application.class.module_parent_name,
+        database: database_status,
+        redis: redis_status
+      }
+    end
+    
     private
 
     def telegram_request(method, params)
@@ -199,15 +209,6 @@ https://t.me/mem_culture_bot?start=in_#{@user.tg_id}"
     end
 
 
-    def health
-      render json: { 
-        status: 'ok', 
-        timestamp: Time.current.iso8601,
-        version: Rails.application.class.module_parent_name,
-        database: database_status,
-        redis: redis_status
-      }
-    end
 
     def database_status
       ActiveRecord::Base.connection.execute('SELECT 1')
