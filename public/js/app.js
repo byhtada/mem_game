@@ -2,6 +2,7 @@
 /*!*******************!*\
   !*** ./js/app.js ***!
   \*******************/
+// 🚀 Версия с автоматическим watcher
 Telegram.WebApp.ready();
 let init_data = Telegram.WebApp.initData
 
@@ -11,12 +12,9 @@ let api_url = "/"; // Используем относительные пути �
 console.log("🎮 window.location.href32 ", window.location.href)
 
 if (window.location.href.includes("127.0.0.1:5500")) {
-  // Если запущен отдельно через webpack dev server
-  api_url = "http://127.0.0.1:3000/";
   init_data = "user=%7B%22id%22%3A317600571%2C%22first_name%22%3A%22%D0%90%D0%BB%D0%B5%D0%BA%D1%81%D0%B0%D0%BD%D0%B4%D1%80%22%2C%22last_name%22%3A%22%22%2C%22username%22%3A%22aleksandrrr_n%22%2C%22language_code%22%3A%22ru%22%2C%22is_premium%22%3Atrue%2C%22allows_write_to_pm%22%3Atrue%2C%22photo_url%22%3A%22https%3A%5C%2F%5C%2Ft.me%5C%2Fi%5C%2Fuserpic%5C%2F320%5C%2FlcHASOH7fiK4aSZX9v9XBudEdIE7m91wkR957a1XpZs.svg%22%7D&chat_instance=-7090027097801552795&chat_type=channel&auth_date=1736270286&signature=VTQpsQKQrOuHEX-Z6KVDT81nmHxDBeYiJXoo47PLTdZfk0z4hdneRFl3ITwjZGAfm8CSWfgiKtLARchvv5fpCg&hash=29fba79d9b9a8ec4393469d47b0a5c08d9f93958ca226c81dcd521d9892ee55b"
-} else if (window.location.href.includes("memgame-api.fly.dev")) {
-  // Если запущен на production сервере fly.dev
-  api_url = "https://memgame-api.fly.dev/";
+} else if (window.location.href.includes("teremok.space")) {
+  init_data = Telegram.WebApp.initData
 }
  
 

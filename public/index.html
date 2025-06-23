@@ -1,1 +1,705 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>MemCulture</title><link href="css/style.css?v=1750702515441" rel="stylesheet"/><link rel="stylesheet" href="libs/progress_bar/loading-bar.css"/><script type="text/javascript" src="libs/progress_bar/loading-bar.js"></script></head><body><main><div id="page_load"><img src="assets/load.png"/></div><div id="page_main"><div class="top_bar"><div class="container horizontal"><div id="div_user_info" class="container horizontal"><img id="user_ava" src="./assets/avatars/lauging.svg"/><div id="user_name" class="user_name">UserChelovek</div></div><div class="open_premium container text_with_icon"><img src="img/premium_locked.svg"/><div class="orange">Premium</div></div></div><div class="line"></div><div class="container horizontal"><div>$MEMC</div><div id="current_dollars" class="grey">~12.22$</div><div class="container text_with_icon"><div class="value_coins">312</div><img src="img/coin.svg"/></div></div><div class="container_energy"><div>Энергия</div><div class="container_energy_bar"><div class="energy_bar"></div></div><div class="container text_with_icon"><div class="value_energy">312</div><img src="img/energy.svg"/></div></div></div><div class="page_main" data-page="main"><h1>Играй и зарабатывай!!! 🎮</h1><div class="container_big_img"><img class="big_img" src="assets/mem_img/svg/mem_20.svg"/></div><div class="container with_background horizontal"><div class="container text_with_icon"><div class="text_cost_participant">За участие +10</div><img src="img/coin.svg"/></div><div class="container text_with_icon"><div class="text_cost_winner">За победу +50</div><img src="img/coin.svg"/></div></div><button class="btn" id="btn_find_game">Играть 75 <img src="img/energy.svg"/></button><br><br><br><h1>Задания<div class="line"></div><h3>нет активных заданий</h3><div id="container_tasks"><div class="container with_background horizontal" style="display:none"><div class="container text_with_icon"><img src="img/coin.svg"/><div>Подпишись</div></div><div class="container text_with_icon"><div>50</div><img src="img/coin.svg"/></div></div></div></h1></div><div class="page_main" data-page="about"><h2>Расчетная цена 1 $MEMC, $<div style="width:340px"><canvas id="profit_graph"></canvas></div><br><h1>White Paper</h1><div class="line"></div><br><br><div class="container_about"><div class="about_header">Ценность $MEMC</div><div class="about_content">$MEMC - это плата за генерацию BigData о мемах, путем взаимодействие с механиками, выстроенными в формате игр.<br><br>Мем культура - это неотъемлимая часть современного общества, а проект MemCulture призван сделать ее понятнее благодаря созданию и агрегации данных.<br><br>Эти данные готовы покупать корпорации и компании для более эффективного выстраивания своих маркетинговых кампаний.<br><br>Данные продаются за $MEMC, что придает им реальную ценность.</div></div><div class="container_about"><div class="about_header">AirDrop $MEMC</div><div class="about_content">Расчетная модель показала, что оптимальным является выпуск 1.000.000.000 $MEMC<br><br>После добычи каждых 100.000.000 $MEMC базовая награда за игру будет снижаться на 10%.</div></div><div class="container_about"><div class="about_header">RoadMap $MEMC</div><div class="about_content"><h3>2025 Q1</h3><ul><li>Подготовка платформы к выходу на EN рынок</li><li>Развитие механик платформы для всех рынков</li><li>AirDrop на русскоязычном рынке</li></ul><div class="line"></div><h3>2025 Q2</h3><ul><li>Выход платформы на EN рынок</li><li>AirDrop на EN рынке</li><li><b>Листинг монеты на Binance</b></li><li class="orange">Profit?</li></ul><div class="line"></div><h3>2025 Q3</h3><ul><li class="orange">Profit!</li></ul></div></div><div class="btn open_premium">Стать Premium</div><br><br></h2></div><div class="page_main" data-page="friends"><h1>Играй с друзьями!<div class="container_big_img"><img class="big_img" src="assets/mem_img/svg/mem_98.svg"/></div><div class="container with_background horizontal"><div class="container text_with_icon"><div class="text_cost_participant">За участие +10</div><img src="img/coin.svg"/></div><div class="container text_with_icon"><div class="text_cost_winner">За победу +50</div><img src="img/coin.svg"/></div></div><div id="container_game_participants"><h3>Кол-во игроков</h3><div id="btns_game_participants"><button class="btn second" id="btn_remove_participant">-</button><div id="game_participants">4</div><button class="btn second" id="btn_add_participant">+</button></div></div><button class="btn" id="btn_create">Создать игру 75 <img src="img/energy.svg"/></button><div id="container_game_code"><input id="input_game_code" type="number" placeholder="Введите код игры"/></div><button class="btn second" id="btn_enter">Войти в игру 75 <img src="img/energy.svg"/></button><br><br><button class="btn" id="btn_invite_friend">Пригласить +500 <img src="img/coin.svg"/></button><div id="div_btns_invite"><button class="btn" id="btn_invite_message">Отправить сообщение</button> <button class="btn second" id="btn_invite_link">Копировать ссылку</button></div><br><h1>Список друзей<div id="div_friends_list"><div class="line"></div><h2>Приглашай и получай +500 $MEMC</h2><h3 style="margin-top:5px;margin-bottom:20px">на свой кошелек и на кошелек друга</h3><div class="line"></div></div></h1></h1></div><div class="page_main" data-page="tournament"><h1>ПЕРВЫЙ Турнир</h1><div style="text-align:center">07.06.25 в 13:00 МСК</div><div class="container_big_img"><img class="big_img" src="assets/mem_img/svg/mem_75.svg"/></div><div class="line"></div><h3>Участвуй в турнире по нашей игре и получи шанс выиграть один из призов</h3><br><div class="line"></div><br><br><div class="tournament_row first"><div class="place">#1</div><div>ПК на RTX 4060</div></div><div class="tournament_row second"><div class="place">#2</div><div>iPhone 16 Pro</div></div><div class="tournament_row third"><div class="place">#3</div><div>PlayStation 5</div></div><div class="tournament_row"><div class="place">#4-10</div><div>44.4 TON</div></div><div class="tournament_row"><div class="place">#11-25</div><div>11.1 TON</div></div><h2>Участие в турнире доступно для тех, кто пригласил 3х друзей</h2><button id="btn_tournament_register" class="btn">Регистрация</button><div id="div_tournament_registered"><br><div class="line"></div><h1 class="orange">Ты зарегистрирован</h1><div class="line"></div></div></div><div class="page_main" data-page="clicker"><h1>Генератор</h1><div class="line"></div><h3>Кликай на мем<br>и получай энергию для игр</h3><br><div class="line"></div><br><br><div class="container with_background horizontal"><div class="container text_with_icon"><div>За клик +0.1</div><img src="img/energy.svg"/></div><div class="container text_with_icon"><div>Для премиум +1.1</div><img src="img/energy.svg"/></div></div><div class="container"><br><h1><span class="value_energy"></span> <img src="img/energy.svg"/></h1><div class="container_energy"><div class="container_energy_bar"><div class="energy_bar"></div></div></div><h3>Энергии для <span id="text_games_count"></span></h3><div class="container_clicker"><img id="btn_click_energy" src="assets/mems/svg/mem_20.svg"/></div></div><br><br><br><br><div class="line"></div><br><h1>Конвертер</h1><div class="container_big_img"><img class="big_img" src="assets/mem_img/svg/mem_41.svg"/></div><div class="btn" id="btn_converter">Обменять 50 <img src="img/energy.svg"/> на 4<img src="img/coin.svg"/></div></div><div class="bottom_bar"><a class="icon_flow nav_bottom active" data-page="main"><span class="nav_bottom-img"><img id="nav_icon_flow" src="./img/nav/selected/main.svg?v=1750702347296" alt=""></span></a><a class="nav_bottom" data-page="about"><span class="nav_bottom-img"><img src="./img/nav/common/about.svg?v=1750702347296" alt=""></span></a><a class="nav_bottom" data-page="friends"><span class="nav_bottom-img"><img src="./img/nav/common/friends.svg?v=1750702347296" alt=""></span></a><a class="nav_bottom" data-page="tournament"><span class="nav_bottom-img"><img src="./img/nav/common/tournament.svg?v=1750702347296" alt=""></span></a><a class="nav_bottom" data-page="clicker"><span class="nav_bottom-img"><img src="./img/nav/common/clicker.svg?v=1750702347296" alt=""></span></a></div></div><div id="page_game"><div id="div_players" class="div_players"></div><div class="div_play_field"><h1 id="game_winner"></h1><div id="div_question"><div class="line"></div><div id="game_question">Вот такая ситуация....</div><div id="container_progress_line"><div id="progress_line"></div><div id="progress_comment">Выбираем мем</div></div><div class="line"></div></div><div id="container_finish_game"><div class="container_big_img"><img class="big_img" src="assets/mem_img/svg/mem_1.svg"/></div><button class="btn" id="btn_new_game">Новая игра</button> <button class="btn" id="btn_restart_game">Повторить этим составом</button></div><div id="div_video"><video id="my_mem_video" width="300" autoplay playsinline><source id="my_mem_mp4" type="video/mp4">Your browser does not support HTML video.</video><button class="btn" id="btn_send">Отправить</button></div><div id="div_round_result"><div id="div_video_4" class="div_mem"><div class="container_video_img"><img class="mem_vote" src="img/like_active.svg"/> <img class="user_avatar" src="assets/tapps.png"/></div><div class="container_video_mem"><div class="mem_sender_name">Name</div><video id="mem_4_video" width="275" playsinline><source id="mem_4_mp4" type="video/mp4">Your browser does not support HTML video.</video></div></div><div id="div_video_3" class="div_mem"><div class="container_video_img"><img class="mem_vote" src="img/like_active.svg"/> <img class="user_avatar" src="assets/tapps.png"/></div><div class="container_video_mem"><div class="mem_sender_name">Name</div><video id="mem_3_video" width="275" playsinline><source id="mem_3_mp4" type="video/mp4">Your browser does not support HTML video.</video></div></div><div id="div_video_2" class="div_mem"><div class="container_video_img"><img class="mem_vote" src="img/like_active.svg"/> <img class="user_avatar" src="assets/tapps.png"/></div><div class="container_video_mem"><div class="mem_sender_name">Name</div><video id="mem_2_video" width="275" playsinline><source id="mem_2_mp4" type="video/mp4">Your browser does not support HTML video.</video></div></div><div id="div_video_1" class="div_mem"><div class="container_video_img"><img class="mem_vote" src="img/like_active.svg"/> <img class="user_avatar" src="assets/tapps.png"/></div><div class="container_video_mem"><div class="mem_sender_name">Name</div><video id="mem_1_video" width="275" playsinline><source id="mem_1_mp4" type="video/mp4">Your browser does not support HTML video.</video></div></div><div id="div_video_0" class="div_mem"><div class="container_video_img"><img class="mem_vote" src="img/like_active.svg"/> <img class="user_avatar" src="assets/tapps.png"/></div><div class="container_video_mem"><div class="mem_sender_name">Name</div><video id="mem_0_video" width="275" playsinline><source id="mem_0_mp4" type="video/mp4">Your browser does not support HTML video.</video></div></div></div></div><div id="div_my_mems"></div></div><div id="errors"><div id="container_user_data" class="bottom_container"><div class="background"></div><div class="content"><h3>Никнейм</h3><input id="input_user_nick" placeholder="Никнейм"/><h3>Аватар</h3><div id="container_avatars"></div><button class="btn" id="btn_save_user_data">Сохранить</button></div></div><div id="container_premium" class="bottom_container"><div class="background"></div><div class="content"><br><div class="container_big_img"><img src="assets/mem_img/svg/mem_14.svg"/></div><div class="premium_container"><div class="first"></div><div class="second"><div class="container text_with_icon">База</div></div><div class="third"><div class="container text_with_icon orange">Премиум</div></div></div><div class="premium_container"><div class="first"><div>Кол-во энергии</div><div class="sub">в день</div></div><div class="second"><div class="container text_with_icon"><div>250</div><img src="img/energy.svg"/></div></div><div class="third"><div class="container text_with_icon"><div>750</div><img src="img/energy.svg"/></div></div></div><div class="premium_container"><div class="first"><div>Генератор</div><div class="sub">за клик</div></div><div class="second"><div class="container text_with_icon"><div>0.1</div><img src="img/energy.svg"/></div></div><div class="third"><div class="container text_with_icon"><div>1.1</div><img src="img/energy.svg"/></div></div></div><div class="premium_container"><div class="first"><div>Награда</div><div class="sub">за участие</div></div><div class="second"><div class="container text_with_icon"><div>10</div><img src="img/coin.svg"/></div></div><div class="third"><div class="container text_with_icon"><div>30</div><img src="img/coin.svg"/></div></div></div><div class="premium_container"><div class="first"><div>Награда</div><div class="sub">за победу</div></div><div class="second"><div class="container text_with_icon"><div>50</div><img src="img/coin.svg"/></div></div><div class="third"><div class="container text_with_icon"><div>150</div><img src="img/coin.svg"/></div></div></div><div class="premium_container"><div class="first"><div>Пассивный доход</div><div class="sub">$MEMC/день</div></div><div class="second"><div class="container text_with_icon"><div>0</div><img src="img/coin.svg"/></div></div><div class="third"><div class="container text_with_icon"><div>1000</div><img src="img/coin.svg"/></div></div></div><button class="btn" id="btn_buy_premium">Оформить Premium</button></div></div><div id="container_error" class="bottom_container"><div class="background"></div><div class="content"><div class="container_big_img"><img src="assets/mem_img/svg/mem_57.svg"/></div><h3 id="error_text">Никнейм</h3><button class="btn" id="btn_close_error">Ясно, понятно</button></div></div></div></main><script src="libs/telegram.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js" integrity="sha512-ZwR1/gSZM3ai6vCdI+LVF1zSq/5HznD3ZSTk7kajkaj4D292NLuduDCO1c/NT8Id+jE58KYLKT7hXnbtryGmMg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script><script src="https://cdn.jsdelivr.net/npm/eruda"></script><script type="text/javascript">"serviceWorker"in navigator&&(console.log("Will the service worker register?"),navigator.serviceWorker.register("service-worker.js").then(function(e){console.log("Yes, it did.")}).catch(function(e){console.log("No it didn't. This happened:",e)}))</script><script defer="defer" src="./js/app.0beff909a1b32cb19284.js?64dc84c277cba6c71c0b"></script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>MemCulture</title>
+  <link href="css/style.css?v=1750706179778" rel="stylesheet" type="text/css"/>
+
+  <link rel="stylesheet" type="text/css" href="libs/progress_bar/loading-bar.css"/>
+  <script type="text/javascript" src="libs/progress_bar/loading-bar.js"></script>
+</head>
+
+<body>
+
+<main>
+
+  <div id="page_load">
+
+    <img src="assets/load.png"/>
+  </div>
+
+  <div id="page_main">
+
+    <div class="top_bar">
+      <div class="container horizontal">
+        <div id="div_user_info" class="container horizontal">
+          <img id="user_ava" src="./assets/avatars/lauging.svg"/>
+          <div id="user_name" class="user_name">UserChelovek</div>
+        </div>
+
+        
+        <div class="open_premium container text_with_icon">
+          <img src="img/premium_locked.svg" />
+          <div class="orange">Premium</div>
+        </div>
+      </div>
+
+      <div class="line"></div>
+
+      <div class="container horizontal">
+        <div>$MEMC</div>
+
+        <div id="current_dollars" class="grey">~12.22$</div>
+
+        <div class="container text_with_icon">
+          <div class="value_coins">312</div>
+          <img src="img/coin.svg" />
+        </div>
+      </div>
+
+      <div class="container_energy">
+        <div>Энергия</div>
+        <div class="container_energy_bar">
+          <div class="energy_bar"></div>
+        </div>
+
+        <div class="container text_with_icon">
+          <div class="value_energy">312</div>
+          <img src="img/energy.svg" />
+        </div>
+      </div>
+
+    </div>
+
+
+    <div class="page_main" data-page="main">
+
+      <h1>Играй и зарабатывай!!! 🎮</h1>
+
+      <div class="container_big_img">
+        <img class="big_img" src="assets/mem_img/svg/mem_20.svg"/>
+      </div>
+
+      <div class="container with_background horizontal">
+        <div class="container text_with_icon">
+          <div class="text_cost_participant">За участие +10</div>
+          <img src="img/coin.svg" />
+        </div>
+
+        <div class="container text_with_icon">
+          <div class="text_cost_winner">За победу +50</div>
+          <img src="img/coin.svg" />
+        </div>
+      </div>
+
+      <button class="btn" id="btn_find_game">Играть 75 <img src="img/energy.svg" /></button>
+
+      <br> <br> <br>
+
+      <h1>Задания</h3>
+      <div class="line"></div>
+      <h3>нет активных заданий</h3>
+      
+      <div id="container_tasks">
+        <div class="container with_background horizontal" style="display: none;">
+          <div class="container text_with_icon">
+            <img src="img/coin.svg" />
+            <div>Подпишись</div>
+          </div>
+
+          <div class="container text_with_icon">
+            <div>50</div>
+            <img src="img/coin.svg" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page_main" data-page="about">
+      <h2>Расчетная цена 1 $MEMC, $</h1>
+      <div style="width: 340px;"><canvas id="profit_graph"></canvas></div>
+
+      <br>
+
+      <h1>White Paper</h1>
+      <div class="line"></div>
+
+      <br>
+      <br>
+
+      <div class="container_about">
+        <div class="about_header">
+          Ценность $MEMC
+        </div>
+        <div class="about_content">
+          $MEMC - это плата за генерацию BigData о мемах, путем взаимодействие с механиками, выстроенными в формате игр. 
+          <br> <br>
+          Мем культура - это неотъемлимая часть современного общества, а проект MemCulture призван сделать ее понятнее 
+          благодаря созданию и агрегации данных.
+          <br> <br>
+          Эти данные готовы покупать корпорации и компании 
+          для более эффективного выстраивания своих маркетинговых кампаний. 
+          <br> <br>
+          Данные продаются за $MEMC, что придает им реальную ценность.
+        </div>
+      </div>
+
+      <div class="container_about">
+        <div class="about_header">
+          AirDrop $MEMC
+        </div>
+        <div class="about_content">
+          Расчетная модель показала, что оптимальным является выпуск 1.000.000.000 $MEMC
+          <br> <br>
+          После добычи каждых 100.000.000 $MEMC базовая награда за игру будет снижаться на 10%.
+        </div>
+      </div>
+
+
+      <div class="container_about">
+        <div class="about_header">
+          RoadMap $MEMC
+        </div>
+        <div class="about_content">
+          <h3>2025 Q1</h3>
+          <ul>
+            <li>Подготовка платформы к выходу на EN рынок</li>
+            <li>Развитие механик платформы для всех рынков</li>
+            <li>AirDrop на русскоязычном рынке</li>
+          </ul>
+
+          <div class="line"></div>
+
+          <h3>2025 Q2</h3>
+          <ul>
+            <li>Выход платформы на EN рынок</li>
+            <li>AirDrop на EN рынке</li>
+            <li><b>Листинг монеты на Binance</b></li>
+            <li class="orange">Profit?</li>
+          </ul>
+
+          <div class="line"></div>
+
+          <h3>2025 Q3</h3>
+          <ul>
+            <li class="orange">Profit!</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="btn open_premium">Стать Premium</div>
+      <br><br>
+    </div>
+   
+    <div class="page_main" data-page="friends">
+
+      <h1>Играй с друзьями!</h3>
+
+      <div class="container_big_img">
+        <img class="big_img" src="assets/mem_img/svg/mem_98.svg"/>
+      </div>
+  
+      <div class="container with_background horizontal">
+        <div class="container text_with_icon">
+          <div class="text_cost_participant">За участие +10</div>
+          <img src="img/coin.svg" />
+        </div>
+  
+        <div class="container text_with_icon">
+          <div class="text_cost_winner">За победу +50</div>
+          <img src="img/coin.svg" />
+        </div>
+      </div> 
+
+      <div id="container_game_participants">
+        <h3>Кол-во игроков</h3>
+
+        <div id="btns_game_participants">
+          <button class="btn second" id="btn_remove_participant">-</button>
+          <div id="game_participants">4</div>
+          <button class="btn second" id="btn_add_participant">+</button>
+        </div>
+      </div>
+      <button class="btn" id="btn_create">Создать игру 75 <img src="img/energy.svg" /></button>
+
+      <div id="container_game_code">
+        <input id="input_game_code" type="number" placeholder="Введите код игры"/>
+      </div>
+      <button class="btn second" id="btn_enter">Войти в игру 75 <img src="img/energy.svg" /></button>
+
+      
+      <br>
+      <br>
+
+      <button class="btn" id="btn_invite_friend">Пригласить +500 <img src="img/coin.svg" /></button>
+
+      <div id="div_btns_invite">
+        <button class="btn" id="btn_invite_message">Отправить сообщение</button>
+        <button class="btn second" id="btn_invite_link">Копировать ссылку</button>
+      </div>
+
+      <br>
+
+      <h1>Список друзей</h3>
+
+      <div id="div_friends_list">
+        <div class="line"></div>
+        <h2>Приглашай и получай +500 $MEMC</h2>
+        <h3 style="margin-top: 5px; margin-bottom: 20px;">на свой кошелек и на кошелек друга</h3>
+        <div class="line"></div>
+      </div>
+
+    </div>
+
+    <div class="page_main" data-page="tournament">
+
+      <h1>ПЕРВЫЙ Турнир</h1>
+      <div style="text-align: center;">07.06.25 в 13:00 МСК</div>
+
+      <div class="container_big_img">
+        <img class="big_img" src="assets/mem_img/svg/mem_75.svg"/>
+      </div>
+
+      <div class="line"></div>
+      <h3>Участвуй в турнире по нашей игре и получи шанс выиграть один из призов</h3>
+      <br>
+      <div class="line"></div>
+      <br>  <br>
+
+      <div class="tournament_row first">
+        <div class="place">#1</div>
+        <div>ПК на RTX 4060</div>
+      </div>
+
+      <div class="tournament_row second">
+        <div class="place">#2</div>
+        <div>iPhone 16 Pro</div>
+      </div>
+
+      <div class="tournament_row third">
+        <div class="place">#3</div>
+        <div>PlayStation 5</div>
+      </div>
+
+      <div class="tournament_row">
+        <div class="place">#4-10</div>
+        <div>44.4 TON</div>
+      </div>
+
+      <div class="tournament_row">
+        <div class="place">#11-25</div>
+        <div>11.1 TON</div>
+      </div>
+
+      <h2>Участие в турнире доступно для тех, кто пригласил 3х друзей</h2>
+      
+      <button id="btn_tournament_register" class="btn">Регистрация</button>
+    
+      <div id="div_tournament_registered">
+        <br>
+        <div class="line"></div>
+        <h1 class="orange">Ты зарегистрирован</h1>
+        <div class="line"></div>
+      </div>
+    </div>
+
+    <div class="page_main" data-page="clicker">
+      <h1>Генератор</h1>
+      <div class="line"></div>
+
+      <h3>Кликай на мем<br>и получай энергию для игр</h3>
+      <br>
+      <div class="line"></div>
+
+      <br><br>
+      <div class="container with_background horizontal">
+        <div class="container text_with_icon">
+          <div>За клик +0.1</div>
+          <img src="img/energy.svg" />
+        </div>
+
+        <div class="container text_with_icon">
+          <div>Для премиум +1.1</div>
+          <img src="img/energy.svg" />
+        </div>
+      </div>
+
+      <div class="container">
+        <br>
+        <h1><span class="value_energy"></span> <img src="img/energy.svg" /></h1>
+
+        <div class="container_energy">
+          <div class="container_energy_bar">
+            <div class="energy_bar"></div>
+          </div>
+        </div>
+
+        <h3>Энергии для <span id="text_games_count"></span></h3>
+      
+        <div class="container_clicker">
+          <img id="btn_click_energy" src="assets/mems/svg/mem_20.svg" />
+        </div>
+      </div>
+
+      <br>  <br> 
+      <br> <br>
+      <div class="line"></div>
+      <br>
+      <h1>Конвертер</h1>
+     
+      <div class="container_big_img">
+        <img class="big_img" src="assets/mem_img/svg/mem_41.svg" />
+      </div>
+      <div class="btn" id="btn_converter">Обменять 50 <img src="img/energy.svg"/> на 4<img src="img/coin.svg"/></div>
+    </div>
+
+    <div class="bottom_bar">
+      <a class="icon_flow nav_bottom active" data-page="main">
+          <span class="nav_bottom-img"><img id="nav_icon_flow" src="./img/nav/selected/main.svg?v=1750702347296" alt=""></span>
+      </a>
+
+      <a class="nav_bottom" data-page="about">
+          <span class="nav_bottom-img"><img src="./img/nav/common/about.svg?v=1750702347296" alt=""></span>
+      </a>
+      <a class="nav_bottom" data-page="friends">
+          <span class="nav_bottom-img"><img src="./img/nav/common/friends.svg?v=1750702347296" alt=""></span>
+      </a>
+
+
+      <a  class="nav_bottom" data-page="tournament">
+          <span class="nav_bottom-img"><img src="./img/nav/common/tournament.svg?v=1750702347296" alt=""></span>
+      </a>
+      <a  class="nav_bottom" data-page="clicker">
+          <span class="nav_bottom-img"><img src="./img/nav/common/clicker.svg?v=1750702347296" alt=""></span>
+      </a>
+    </div>
+
+  </div>
+
+  <div id="page_game">
+    <div id="div_players" class="div_players"></div>
+
+    <div class="div_play_field">
+
+      <h1 id="game_winner"></h1>
+
+      <div id="div_question">
+        <div class="line"></div>
+        <div id="game_question">Вот такая ситуация....</div>
+
+        <div id="container_progress_line">
+          <div id="progress_line"></div>
+          <div id="progress_comment">Выбираем мем</div>
+        </div>
+        <div class="line"></div>
+      </div>
+
+      
+      <div id="container_finish_game">
+        <div  class="container_big_img">
+          <img class="big_img" src="assets/mem_img/svg/mem_1.svg"/>
+        </div>
+  
+        <button class="btn" id="btn_new_game">
+          Новая игра
+        </button>
+        <button class="btn" id="btn_restart_game">
+          Повторить этим составом
+        </button>
+      </div>
+    
+
+
+
+      <div id="div_video">
+
+        <video  id="my_mem_video" width="300" autoplay playsinline >
+          <source id="my_mem_mp4" type="video/mp4">
+          Your browser does not support HTML video.
+        </video>
+
+        <button class="btn" id="btn_send">
+          Отправить
+        </button>
+      </div>
+
+      <div id="div_round_result">
+
+        <div id="div_video_4" class="div_mem">
+
+          <div class="container_video_img">
+            <img class="mem_vote"    src="img/like_active.svg"/>
+            <img class="user_avatar" src="assets/tapps.png" />
+          </div>
+
+
+          <div class="container_video_mem">
+            <div class="mem_sender_name">Name</div>
+
+            <video  id="mem_4_video" width="275" playsinline>
+              <source id="mem_4_mp4" type="video/mp4">
+              Your browser does not support HTML video.
+            </video>
+          </div>
+        </div>
+        <div id="div_video_3" class="div_mem">
+
+          <div class="container_video_img">
+            <img class="mem_vote"    src="img/like_active.svg"/>
+            <img class="user_avatar" src="assets/tapps.png" />
+          </div>
+
+
+          <div class="container_video_mem">
+            <div class="mem_sender_name">Name</div>
+
+            <video  id="mem_3_video" width="275" playsinline>
+              <source id="mem_3_mp4" type="video/mp4">
+              Your browser does not support HTML video.
+            </video>
+          </div>
+        </div>
+
+        <div id="div_video_2" class="div_mem">
+
+          <div class="container_video_img">
+            <img class="mem_vote"    src="img/like_active.svg"/>
+            <img class="user_avatar" src="assets/tapps.png" />
+          </div>
+
+          <div class="container_video_mem">
+            <div class="mem_sender_name">Name</div>
+
+            <video  id="mem_2_video" width="275" playsinline>
+              <source id="mem_2_mp4" type="video/mp4">
+              Your browser does not support HTML video.
+            </video>
+          </div>
+        </div>
+
+        <div id="div_video_1" class="div_mem">
+          <div class="container_video_img">
+            <img class="mem_vote"    src="img/like_active.svg"/>
+            <img class="user_avatar" src="assets/tapps.png" />
+          </div>
+
+          <div class="container_video_mem">
+            <div class="mem_sender_name">Name</div>
+
+            <video  id="mem_1_video" width="275" playsinline>
+              <source id="mem_1_mp4" type="video/mp4">
+              Your browser does not support HTML video.
+            </video>
+          </div>
+        </div>
+
+        <div id="div_video_0" class="div_mem">
+          <div class="container_video_img">
+            <img class="mem_vote"    src="img/like_active.svg"/>
+            <img class="user_avatar" src="assets/tapps.png" />
+          </div>
+
+          <div class="container_video_mem">
+            <div class="mem_sender_name">Name</div>
+
+            <video  id="mem_0_video" width="275"  playsinline>
+              <source id="mem_0_mp4" type="video/mp4">
+              Your browser does not support HTML video.
+            </video>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <div id="div_my_mems">
+      <!-- <div class="mem_card"><img src="mems/advokat/img.png"/></div> -->
+    </div>
+  </div>
+
+
+  <div id="errors">
+
+    <div id="container_user_data" class="bottom_container">
+      <div class="background"></div>
+
+      <div class="content">
+        <h3>Никнейм</h3>
+        <input id="input_user_nick" type="text" placeholder="Никнейм"/>
+  
+        <h3>Аватар</h3>
+  
+        <div id="container_avatars"></div>
+  
+        <button class="btn" id="btn_save_user_data">Сохранить</button>
+      </div>
+    </div>
+
+    <div id="container_premium" class="bottom_container">
+      <div class="background"></div>
+      
+      <div class="content">
+        <br>
+        <div class="container_big_img">
+          <img src="assets/mem_img/svg/mem_14.svg"/>
+        </div>
+
+        <div class="premium_container">          
+          <div class="first"></div>
+          <div class="second">
+            <div class="container text_with_icon">
+              База
+            </div>
+          </div>
+          <div class="third">
+            <div class="container text_with_icon orange">
+              Премиум
+            </div>
+          </div>
+        </div>
+
+        <div class="premium_container">          
+          <div class="first">
+            <div>Кол-во энергии</div>
+            <div class="sub">в день</div>
+          </div>
+
+          <div class="second">
+            <div class="container text_with_icon">
+              <div>250</div>
+              <img src="img/energy.svg" />
+            </div>
+          </div>
+
+          <div class="third">
+            <div class="container text_with_icon">
+              <div>750</div>
+              <img src="img/energy.svg" />
+            </div>
+          </div>
+        </div>
+
+ 
+        <div class="premium_container">          
+          <div class="first">
+            <div>Генератор</div>
+            <div class="sub">за клик</div>
+          </div>
+
+          <div class="second">
+            <div class="container text_with_icon">
+              <div>0.1</div>
+              <img src="img/energy.svg" />
+            </div>
+          </div>
+          
+          <div class="third">
+            <div class="container text_with_icon">
+              <div>1.1</div>
+              <img src="img/energy.svg" />
+            </div>
+          </div>
+        </div>
+
+
+        <div class="premium_container">          
+          <div class="first">
+            <div>Награда</div>
+            <div class="sub">за участие</div>
+          </div>
+
+          <div class="second">
+            <div class="container text_with_icon">
+              <div>10</div>
+              <img src="img/coin.svg" />
+            </div>
+          </div>
+          
+          <div class="third">
+            <div class="container text_with_icon">
+              <div>30</div>
+              <img src="img/coin.svg" />
+            </div>
+          </div>
+        </div>
+
+
+        <div class="premium_container">          
+          <div class="first">
+            <div>Награда</div>
+            <div class="sub">за победу</div>
+          </div>
+
+          <div class="second">
+            <div class="container text_with_icon">
+              <div>50</div>
+              <img src="img/coin.svg" />
+            </div>
+          </div>
+          
+          <div class="third">
+            <div class="container text_with_icon">
+              <div>150</div>
+              <img src="img/coin.svg" />
+            </div>
+          </div>
+        </div>
+
+
+        <div class="premium_container">          
+          <div class="first">
+            <div>Пассивный доход</div>
+            <div class="sub">$MEMC/день</div>
+          </div>
+
+          <div class="second">
+            <div class="container text_with_icon">
+              <div>0</div>
+              <img src="img/coin.svg" />
+            </div>
+          </div>
+          
+          <div class="third">
+            <div class="container text_with_icon">
+              <div>1000</div>
+              <img src="img/coin.svg" />
+            </div>
+          </div>
+        </div>
+
+        <button class="btn" id="btn_buy_premium">Оформить Premium</button>
+      </div>
+    </div>
+
+    <div id="container_error" class="bottom_container">
+      <div class="background"></div>
+
+      <div class="content">
+        <div class="container_big_img">
+          <img src="assets/mem_img/svg/mem_57.svg"/>
+        </div>
+        
+        <h3 id="error_text">Никнейм</h3>
+
+        <button class="btn" id="btn_close_error">Ясно, понятно</button>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+
+<script src="libs/telegram.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js" integrity="sha512-ZwR1/gSZM3ai6vCdI+LVF1zSq/5HznD3ZSTk7kajkaj4D292NLuduDCO1c/NT8Id+jE58KYLKT7hXnbtryGmMg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<!-- Eruda is console for mobile browsers -->
+<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+<!--<script>eruda.init();</script>-->
+<!-- Webpack будет автоматически добавлять хэшированные JS файлы здесь -->
+
+
+<script type="text/javascript">
+  if ('serviceWorker' in navigator) {
+      console.log("Will the service worker register?");
+      navigator.serviceWorker.register('service-worker.js')
+          .then(function(reg){
+              console.log("Yes, it did.");
+          }).catch(function(err) {
+          console.log("No it didn't. This happened:", err)
+      });
+  }
+</script>
+<script defer src="./js/app.js"></script></body>
+</html>
