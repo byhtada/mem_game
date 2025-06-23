@@ -28,7 +28,11 @@ help:
 	@echo "  prod-shell     - Shell в production контейнере"
 	@echo "  prod-backup    - Создать backup базы данных"
 	@echo "  prod-restore   - Восстановить из backup"
-	@echo "  ssl-cert       - Получить SSL сертификаты"
+	@echo "  ssl-cert       - Получить SSL сертификаты Let's Encrypt"
+	@echo "  ssl-install    - Установить пользовательские SSL сертификаты"
+	@echo "  ssl-teremok    - Установить сертификаты Teremok (быстро)"
+	@echo "  ssl-check      - Проверить SSL сертификаты"
+	@echo "  ssl-update     - Обновить SSL сертификаты"
 	@echo "  deploy         - Полное развертывание в продакшен"
 
 # Development команды
@@ -113,6 +117,78 @@ ssl-cert:
 	sudo cp certbot/conf/live/$(DOMAIN)/fullchain.pem ssl/cert.pem
 	sudo cp certbot/conf/live/$(DOMAIN)/privkey.pem ssl/key.pem
 	@echo "SSL сертификаты установлены"
+
+# Установка пользовательских SSL сертификатов
+ssl-install:
+	@if [ -z "$(CERT_FILE)" ] || [ -z "$(KEY_FILE)" ]; then \
+		echo "Ошибка: укажите CERT_FILE и KEY_FILE"; \
+		echo "Пример: make ssl-install CERT_FILE=/path/to/cert.crt KEY_FILE=/path/to/key.key"; \
+		exit 1; \
+	fi
+	@echo "Установка пользовательских SSL сертификатов..."
+	mkdir -p ssl
+	cp "$(CERT_FILE)" ssl/cert.pem
+	cp "$(KEY_FILE)" ssl/key.pem
+	chmod 644 ssl/cert.pem
+	chmod 600 ssl/key.pem
+	@echo "✅ Пользовательские SSL сертификаты установлены"
+	@echo "Проверка сертификата:"
+	@openssl x509 -in ssl/cert.pem -noout -subject -issuer -dates
+
+# Быстрая установка сертификатов Teremok
+ssl-teremok:
+	@echo "Установка сертификатов Teremok..."
+	@if [ ! -f ssl/teremok_space.crt ] || [ ! -f ssl/teremok_space.key ]; then \
+		echo "❌ Файлы teremok_space.crt или teremok_space.key не найдены в ssl/"; \
+		echo "Убедитесь, что файлы находятся в папке ssl/"; \
+		exit 1; \
+	fi
+	cp ssl/teremok_space.crt ssl/cert.pem
+	cp ssl/teremok_space.key ssl/key.pem
+	chmod 644 ssl/cert.pem
+	chmod 600 ssl/key.pem
+	@echo "✅ Сертификаты Teremok установлены как cert.pem и key.pem"
+	@echo "Проверка сертификата:"
+	@openssl x509 -in ssl/cert.pem -noout -subject -issuer -dates
+
+# Проверка SSL сертификатов
+ssl-check:
+	@echo "🔍 Проверка SSL сертификатов..."
+	@if [ ! -f ssl/cert.pem ] || [ ! -f ssl/key.pem ]; then \
+		echo "❌ SSL сертификаты не найдены в папке ssl/"; \
+		exit 1; \
+	fi
+	@echo "📋 Информация о сертификате:"
+	@openssl x509 -in ssl/cert.pem -noout -subject -issuer -dates
+	@echo ""
+	@echo "🔑 Проверка соответствия ключа и сертификата:"
+	@cert_hash=$$(openssl x509 -noout -modulus -in ssl/cert.pem | openssl md5); \
+	key_hash=$$(openssl rsa -noout -modulus -in ssl/key.pem | openssl md5); \
+	if [ "$$cert_hash" = "$$key_hash" ]; then \
+		echo "✅ Ключ соответствует сертификату"; \
+	else \
+		echo "❌ Ключ НЕ соответствует сертификату"; \
+		exit 1; \
+	fi
+	@echo ""
+	@echo "📁 Права доступа:"
+	@ls -la ssl/
+
+# Обновление пользовательских SSL сертификатов
+ssl-update:
+	@if [ -z "$(CERT_FILE)" ] || [ -z "$(KEY_FILE)" ]; then \
+		echo "Ошибка: укажите CERT_FILE и KEY_FILE"; \
+		echo "Пример: make ssl-update CERT_FILE=/path/to/new_cert.crt KEY_FILE=/path/to/new_key.key"; \
+		exit 1; \
+	fi
+	@if [ -f scripts/update-ssl.sh ]; then \
+		chmod +x scripts/update-ssl.sh; \
+		./scripts/update-ssl.sh "$(CERT_FILE)" "$(KEY_FILE)"; \
+	else \
+		echo "Скрипт update-ssl.sh не найден, выполняем базовое обновление..."; \
+		make ssl-install CERT_FILE="$(CERT_FILE)" KEY_FILE="$(KEY_FILE)"; \
+		$(DOCKER_COMPOSE_PROD) restart nginx; \
+	fi
 
 ssl-renew:
 	$(DOCKER_COMPOSE_PROD) --profile certbot run --rm certbot renew --quiet

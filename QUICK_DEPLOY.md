@@ -23,7 +23,14 @@ cd /opt/memgame
 cp env.production.example .env
 nano .env  # Заполните переменные!
 
-# 5. SSL сертификаты (самоподписанные для теста)
+# 5. SSL сертификаты
+# Вариант A: У вас уже есть teremok_space.crt и teremok_space.key
+make ssl-teremok
+
+# Вариант B: Другие пользовательские сертификаты  
+make ssl-install CERT_FILE=/path/to/your/cert.crt KEY_FILE=/path/to/your/key.key
+
+# Вариант C: Самоподписанные (для теста)
 mkdir -p ssl
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
   -keyout ssl/key.pem -out ssl/cert.pem \
@@ -90,14 +97,30 @@ DOMAIN=yourdomain.com
 LETSENCRYPT_EMAIL=your@email.com
 ```
 
-## 🔒 SSL сертификаты Let's Encrypt
+## 🔒 SSL сертификаты
 
+### Let's Encrypt (автоматические)
 ```bash
 # Получить реальные SSL сертификаты
 make ssl-cert DOMAIN=yourdomain.com LETSENCRYPT_EMAIL=your@email.com
 
 # Обновить сертификаты
 make ssl-renew
+```
+
+### Пользовательские сертификаты
+```bash
+# Быстрая установка Teremok сертификатов (если файлы уже в ssl/)
+make ssl-teremok
+
+# Установить другие сертификаты
+make ssl-install CERT_FILE=/path/to/cert.crt KEY_FILE=/path/to/key.key
+
+# Проверить сертификаты
+make ssl-check
+
+# Обновить сертификаты Teremok
+make ssl-update CERT_FILE=ssl/teremok_space.crt KEY_FILE=ssl/teremok_space.key
 ```
 
 ## 🎯 Проверка работы
