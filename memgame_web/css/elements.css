@@ -1,0 +1,258 @@
+h1 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 22px;
+
+  img {
+    width: 24px;
+  }
+}
+h2 {
+  margin-bottom: 0px;
+  text-align: center;
+  font-size: 16px;
+}
+h3 {
+  margin-bottom: 0px;
+  text-align: center;
+  font-size: 16px;
+
+  img {
+    width: 16px;
+  }
+}
+
+.btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-size: 18px;
+  width: -moz-available;
+  width: -webkit-fill-available;
+  padding: 15px 20px;
+  text-align: center;
+  border: 1px solid white;
+  border-radius: 14px;
+  margin-top: 20px;
+  background-color: #FF7F5C;
+  box-shadow: 0px 0px 25px #FF7F5C;
+
+  img {
+    width: 20px;
+    margin-left: 5px;
+  }
+}
+
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn.second {
+  background-color: var(--second-color);
+  box-shadow: 0px 0px 25px var(--second-color);
+}
+#div_video btn {
+  margin-left: 20px;
+  margin-right: 20px;
+}
+
+
+ul {
+  margin-top: 15px;
+  padding-left: 15px;
+
+  li {
+    margin-bottom: 5px;
+  }
+}
+
+
+.container_clicker {
+  display: flex;
+  justify-content: center;
+  margin-top: 40px;
+
+  img {
+    width: 220px;
+  }
+  img:active {
+    transform: scale(0.99);
+  }
+}
+
+.line {
+  width:100%;
+  height: 2px;
+  background: rgb(2,0,36);
+  background: linear-gradient(90deg, rgba(2,0,36,0) 0%, rgba(103,51,58,0) 10%, rgba(255,127,92,0.7077424719887955) 40%, rgba(255,127,92,0.71) 60%, rgba(255,127,92,0) 90%, rgba(255,127,92,0) 100%);
+  border-radius: 30%;
+}
+.top_bar .line {
+  margin: 15px 0;
+}
+
+.container.with_background {
+  padding: 15px 20px;
+  border-radius: 14px;
+  background-color: var(--container-color);
+  border: 1px solid var(--second-color);
+}
+
+.container.horizontal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.container.text_with_icon {
+  display: flex;
+  align-items: center;
+
+  img {
+    height: 15px;
+    margin: 0 5px;
+  }
+}
+
+
+
+
+.container_energy {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-top: 10px;
+}
+.container_energy_bar {
+  width: 100%;
+  border-radius: 30px;
+  border: 1px solid white;
+  margin: 0 10px;
+
+}
+.energy_bar {
+  width: 100%;
+  height: 10px;
+
+  background: rgb(17,82,17);
+  background: linear-gradient(90deg, rgba(17,82,17,1) 11%, rgba(117,189,34,1) 35%, rgba(117,189,34,1) 65%, rgba(17,82,17,1) 89%);
+
+  background-position: 0 0;
+  border-radius: 30px;
+  animation: background 3s infinite alternate;
+
+}
+
+@keyframes background {
+  100% {
+    background-position: 100px 0px;
+  }
+}
+
+
+
+.container_big_img {
+  margin-top: 20px;
+  margin-bottom: 30px;
+  display: flex;
+  justify-content: center;
+
+  img {
+    width: 60%;
+  }
+}
+
+
+#container_tasks {
+  margin-top: 10px;
+
+  .container.container.with_background {
+    padding: 15px 10px !important;
+    margin-top: 15px;
+  }
+}
+
+
+
+
+
+
+
+
+.tournament_row {
+  display: flex;
+  align-items: center;
+  padding: 15px 20px;
+  border-radius: 14px;
+  background-color: var(--container-color);
+  border: 1px solid var(--second-color);
+  font-size: 18px;
+  margin-bottom: 10px;
+
+  .place {
+    border-radius: 15px;
+    display: flex;
+    justify-content: center;
+    align-content: center;
+    background-color: #2696c9;
+    padding: 5px;
+    margin-right: 10px;
+    font-size: 14px;
+  }
+}
+.tournament_row.first {
+  box-shadow: 0px 0px 25px #327617;
+  border: 1px solid #327617;
+  .place {
+    background-color: #327617;
+  }
+}
+
+.tournament_row.second {
+  border: 1px solid #327617;
+  .place {
+    background-color: #327617;
+  }
+}
+
+.tournament_row.third {
+  .place {
+    background-color: #327617;
+  }
+}
+
+
+
+.friend_item {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  margin-top: 10px;
+
+  .base_info {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    img {
+      width: 35px;
+      margin-right: 10px;
+    }
+  }
+
+  .second_info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    .date {
+      font-size: 10px;
+      color: #7d7d7d;
+    }
+  }
+}

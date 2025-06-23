@@ -20,8 +20,9 @@ RUN bundle config set --local deployment 'true' && \
     bundle install
 
 # Копирование фронтенда и установка npm зависимостей (включая devDependencies для сборки)
+RUN mkdir -p memgame_web
 COPY memgame_web/package*.json ./memgame_web/
-RUN cd memgame_web && npm ci
+RUN cd memgame_web && npm install
 
 # Копирование приложения
 COPY . .
