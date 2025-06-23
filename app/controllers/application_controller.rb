@@ -3,7 +3,7 @@ class ApplicationController < ActionController::API
     include ActionController::HttpAuthentication::Token::ControllerMethods
   
     puts "APPLICATION_CONTROLLER"
-    before_action :authenticate_user_from_token, except: [:telegram_callback, :test_telegram, :set_webhook, :index]
+    before_action :authenticate_user_from_token, except: [:health, :telegram_callback, :test_telegram, :set_webhook, :index]
   
     TELEGRAM_BOT_TOKEN = '8198065333:AAEaS26LaEq5kVoM1moxvvmuNI22tNEC_cM'
 
@@ -149,7 +149,7 @@ https://t.me/mem_culture_bot?start=in_#{@user.tg_id}"
         redis: redis_status
       }
     end
-    
+
     private
 
     def telegram_request(method, params)
