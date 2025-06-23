@@ -36,13 +36,6 @@ RUN cd memgame_web && npm run build && \
 # Очистка npm cache и node_modules для уменьшения размера образа
 RUN cd memgame_web && npm cache clean --force && rm -rf node_modules
 
-# Предкомпиляция assets с отключенным SSL принуждением и без требования базы данных
-RUN RAILS_ENV=production \
-    RAILS_FORCE_SSL=false \
-    SECRET_KEY_BASE=dummy_secret_for_precompile \
-    DATABASE_URL=postgresql://dummy \
-    bundle exec rails assets:precompile
-
 # Создание пользователя
 RUN groupadd -r app && useradd -r -g app app && \
     chown -R app:app /app
