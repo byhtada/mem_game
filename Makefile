@@ -20,7 +20,9 @@ help:
 	@echo "  status         - Показать статус контейнеров"
 	@echo "  frontend       - Пересобрать фронтенд"
 	@echo "  frontend-update - Обновить версии и пересобрать фронтенд"
+	@echo "  frontend-local - Пересобрать фронтенд локально (без Docker)"
 	@echo "  bump-css       - Увеличить версию CSS файла"
+	@echo "  bump-css-local - Увеличить версию CSS файла локально"
 	@echo ""
 	@echo "Production команды:"
 	@echo "  prod-build     - Собрать образы для продакшена"
@@ -85,9 +87,24 @@ frontend-update:
 	cd memgame_web && npm run version-update
 	$(DOCKER_COMPOSE) exec web bash -c "cd memgame_web && npm run build && cp -r dist/* ../public/ && cp -r assets ../public/ && cp -r libs ../public/"
 
+# Локальная пересборка фронтенда (без Docker)
+frontend-local:
+	@echo "🔧 Локальная пересборка фронтенда..."
+	cd memgame_web && npm run version-update && npm run build
+	cp -r memgame_web/dist/* public/
+	cp -r memgame_web/assets public/
+	cp -r memgame_web/libs public/
+	@echo "✅ Фронтенд пересобран локально"
+
 # Увеличение версии CSS
 bump-css:
 	cd memgame_web && npm run bump-css
+
+# Локальное увеличение версии CSS
+bump-css-local:
+	@echo "🔧 Локальное обновление версии CSS..."
+	cd memgame_web && node bump-css-version.js
+	@echo "✅ Версия CSS обновлена локально"
 
 # Production команды
 prod-build:

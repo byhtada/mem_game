@@ -52,8 +52,8 @@ RUN cp -r memgame_web/dist/* public/ && \
     cp -r memgame_web/assets public/ && \
     cp -r memgame_web/libs public/
 
-# Clean up npm cache
-RUN cd memgame_web && npm cache clean --force && rm -rf node_modules
+# Clean up npm cache (но оставляем node_modules для development)
+RUN cd memgame_web && npm cache clean --force
 
 # Precompile bootsnap code for faster boot times
 RUN bundle exec bootsnap precompile app/ lib/
@@ -61,9 +61,14 @@ RUN bundle exec bootsnap precompile app/ lib/
 # Final stage for app image
 FROM base
 
-# Install packages needed for deployment
+# Install packages needed for deployment AND Node.js for development
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y curl postgresql-client && \
+    apt-get install --no-install-recommends -y \
+    curl \
+    postgresql-client \
+    gnupg2 && \
+    curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y nodejs && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Copy built artifacts: gems, application
