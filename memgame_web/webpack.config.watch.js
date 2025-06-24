@@ -8,8 +8,8 @@ module.exports = merge(common, {
   mode: 'development',
   devtool: 'source-map',
   output: {
-    path: '/output',
-    clean: true,
+    path: path.resolve(__dirname, '../public'),
+    clean: false,
     filename: './js/app.js',
   },
   watchOptions: {
@@ -28,6 +28,7 @@ module.exports = merge(common, {
         { from: 'img', to: 'img' },
         { from: 'css', to: 'css' },
         { from: 'js/vendor', to: 'js/vendor' },
+        { from: 'js/consumer.js', to: 'js/consumer.js' },
         { from: 'icon.svg', to: 'icon.svg' },
         { from: 'favicon.ico', to: 'favicon.ico' },
         { from: 'robots.txt', to: 'robots.txt' },

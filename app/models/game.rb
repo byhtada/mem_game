@@ -31,16 +31,20 @@ class Game < ApplicationRecord
 
     if add
       bot = User.where(bot: true).where.not(id: self.game_users.pluck(:user_id)).sample
-      bot.update(energy: bot.energy + 100)
-      self.join_to_game(bot)
+      if bot.present?
+        bot.update(energy: bot.energy + 100)
+        self.join_to_game(bot)
+      end
     end
   end
 
   def join_to_game(user)
+    Rails.logger.info "🎮 [Game#join_to_game] User #{user.id} (#{user.name}) joining game #{id}"
+    
     return false if user.energy - 75 < 0
     user.update(energy: user.energy - 75)
 
-    GameUser.create(
+    game_user = GameUser.create(
       user_id:    user.id,
       user_name:  user.name,
       user_ava:   user.ava,
@@ -48,7 +52,14 @@ class Game < ApplicationRecord
       game_id:    self.id,
       mem_names:  MemForGameService.call)
 
+    Rails.logger.info "🎮 [Game#join_to_game] Created GameUser #{game_user.id} for user #{user.id}"
+    Rails.logger.info "🎮 [Game#join_to_game] Game #{id} now has #{game_users.count}/#{participants} players"
+
+    # Отправляем обновление всем подписчикам после добавления игрока
+    broadcast_game_update
+
     if self.game_users.count == self.participants
+      Rails.logger.info "🎮 [Game#join_to_game] Game #{id} is full, starting game!"
       self.start_game
     end
 
@@ -60,6 +71,9 @@ class Game < ApplicationRecord
       user.update(game_user_number: i)
     end
 
+    # Отправляем последнее обновление перед сменой состояния
+    broadcast_game_update
+    
     self.update(state: 'playing')
     self.create_round
   end
@@ -131,5 +145,44 @@ class Game < ApplicationRecord
     end
 
     code
+  end
+
+  # Методы для веб-сокет broadcasting
+  def broadcast_game_update
+    # Отправляем обновления только для игр в состоянии регистрации
+    Rails.logger.info "🎮 [Game#broadcast_game_update] Game #{id} state: #{state}"
+    return unless state == 'registration'
+    
+    data = build_game_update_data
+    Rails.logger.info "🎮 [Game#broadcast_game_update] Broadcasting to Game #{id}: #{data.inspect}"
+    GameChannel.broadcast_to(self, data)
+    Rails.logger.info "🎮 [Game#broadcast_game_update] Broadcast completed for Game #{id}"
+  end
+
+  private
+
+  def build_game_update_data
+    {
+      ready_to_start: ready_to_start,
+      ready_progress_wait: ready_progress_wait,
+      users: users_for_broadcast,
+      game: self.as_json,
+      my_mems: []
+    }
+  end
+
+  def users_for_broadcast
+    # Используем ту же логику, что и в методе users, с сортировкой
+    game_users.reload.order(:created_at).map do |game_user|
+      {
+        user_id: game_user.user_id,
+        user_name: game_user.user_name,
+        user_ava: game_user.user_ava,
+        game_user_number: game_user.game_user_number,
+        game_points: game_user.game_points,
+        ready_to_restart: game_user.ready_to_restart,
+        bot: game_user.bot
+      }
+    end
   end
 end

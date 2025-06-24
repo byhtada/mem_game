@@ -1,7 +1,3 @@
-/******/ (() => { // webpackBootstrap
-/*!*******************!*\
-  !*** ./js/app.js ***!
-  \*******************/
 // 🚀 Версия с автоматическим watcher
 Telegram.WebApp.ready();
 let init_data = Telegram.WebApp.initData
@@ -9,9 +5,9 @@ let init_data = Telegram.WebApp.initData
 let api_url = "/"; // Используем относительные пути для API когда фронтенд интегрирован в Rails
 //init_data = "user=%7B%22id%22%3A317600571%2C%22first_name%22%3A%22%D0%90%D0%BB%D0%B5%D0%BA%D1%81%D0%B0%D0%BD%D0%B4%D1%80%22%2C%22last_name%22%3A%22%22%2C%22username%22%3A%22aleksandrrr_n%22%2C%22language_code%22%3A%22ru%22%2C%22is_premium%22%3Atrue%2C%22allows_write_to_pm%22%3Atrue%2C%22photo_url%22%3A%22https%3A%5C%2F%5C%2Ft.me%5C%2Fi%5C%2Fuserpic%5C%2F320%5C%2FlcHASOH7fiK4aSZX9v9XBudEdIE7m91wkR957a1XpZs.svg%22%7D&chat_instance=-7090027097801552795&chat_type=channel&auth_date=1736270286&signature=VTQpsQKQrOuHEX-Z6KVDT81nmHxDBeYiJXoo47PLTdZfk0z4hdneRFl3ITwjZGAfm8CSWfgiKtLARchvv5fpCg&hash=29fba79d9b9a8ec4393469d47b0a5c08d9f93958ca226c81dcd521d9892ee55b"
 
-console.log("🎮 window.location.href32 ", window.location.href)
+console.log("🎮 window.location.href323 ", window.location.href)
 
-if (window.location.href.includes("127.0.0.1:5500")) {
+if (window.location.href.includes("localhost:3000")) {
   init_data = "user=%7B%22id%22%3A317600571%2C%22first_name%22%3A%22%D0%90%D0%BB%D0%B5%D0%BA%D1%81%D0%B0%D0%BD%D0%B4%D1%80%22%2C%22last_name%22%3A%22%22%2C%22username%22%3A%22aleksandrrr_n%22%2C%22language_code%22%3A%22ru%22%2C%22is_premium%22%3Atrue%2C%22allows_write_to_pm%22%3Atrue%2C%22photo_url%22%3A%22https%3A%5C%2F%5C%2Ft.me%5C%2Fi%5C%2Fuserpic%5C%2F320%5C%2FlcHASOH7fiK4aSZX9v9XBudEdIE7m91wkR957a1XpZs.svg%22%7D&chat_instance=-7090027097801552795&chat_type=channel&auth_date=1736270286&signature=VTQpsQKQrOuHEX-Z6KVDT81nmHxDBeYiJXoo47PLTdZfk0z4hdneRFl3ITwjZGAfm8CSWfgiKtLARchvv5fpCg&hash=29fba79d9b9a8ec4393469d47b0a5c08d9f93958ca226c81dcd521d9892ee55b"
 } else if (window.location.href.includes("teremok.space")) {
   init_data = Telegram.WebApp.initData
@@ -239,6 +235,48 @@ document.getElementById('btn_invite_link').addEventListener('click', function(){
 Telegram.WebApp.expand();
 
 const UPDATE_TIME = 1000;
+
+// WebSocket переменные для управления подписками
+let gameSubscription = null;
+let isWebSocketsEnabled = true; // Флаг для включения/отключения веб-сокетов
+
+// Обработчики для отключения веб-сокетов при уходе со страницы
+window.addEventListener('beforeunload', () => {
+  disconnectWebSocket()
+})
+
+// При изменении видимости страницы (переключение вкладок)
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    // Страница скрыта - отключаем веб-сокеты для экономии ресурсов
+    if (gameSubscription) {
+      gameSubscription.unsubscribe()
+      gameSubscription = null
+    }
+  } else {
+    // Страница снова видима - переподключаемся если нужно
+    if (isWebSocketsEnabled && data_game && data_game.id && !gameSubscription) {
+      setTimeout(() => subscribeToGameUpdates(), 1000)
+    }
+  }
+})
+
+function disconnectWebSocket() {
+  console.log('🔌 [disconnectWebSocket] Cleaning up WebSocket connections...');
+  
+  if (gameSubscription) {
+    console.log('🔌 [disconnectWebSocket] Unsubscribing from game channel');
+    gameSubscription.unsubscribe()
+    gameSubscription = null
+  }
+  
+  if (actionCableConsumer) {
+    console.log('🔌 [disconnectWebSocket] Disconnecting Action Cable');
+    actionCableConsumer.disconnect()
+  }
+  
+  console.log('🔌 [disconnectWebSocket] Cleanup completed');
+}
 eruda.init()
 let logger = eruda.get('console');
 
@@ -413,35 +451,133 @@ function startGame(game, current_user_id){
 }
 
 function timeoutGameWait(){
+  // Отключаем старый polling если он был активен
   if (timeout_game_wait != null){
     clearInterval(timeout_game_wait)
   }
 
   setGameUsers([])
 
+  // Используем веб-сокеты если они включены, иначе fallback к polling
+  if (isWebSocketsEnabled) {
+    subscribeToGameUpdates()
+  } else {
+    timeoutGameWaitPolling()
+  }
+}
+
+// Новая функция для подписки на веб-сокет обновления игры
+function subscribeToGameUpdates() {
+  console.log("🔗 [subscribeToGameUpdates] Starting WebSocket connection for game updates...")
+  console.log("🔗 [subscribeToGameUpdates] Game ID:", data_game?.id, "User ID:", user_id)
+  
+  // Проверяем наличие необходимых данных
+  if (!data_game || !data_game.id) {
+    console.error("❌ [subscribeToGameUpdates] No game data available");
+    return;
+  }
+  
+  if (!user_id) {
+    console.error("❌ [subscribeToGameUpdates] No user_id available");
+    return;
+  }
+  
+  // Отписываемся от предыдущей подписки если она была
+  if (gameSubscription) {
+    console.log("🔗 [subscribeToGameUpdates] Unsubscribing from previous subscription")
+    gameSubscription.unsubscribe()
+    gameSubscription = null
+  }
+
+  // Включаем автоматическое переподключение
+  actionCableConsumer.shouldReconnect = true;
+
+  // Подключаемся к Action Cable
+  console.log("🔗 [subscribeToGameUpdates] Connecting to Action Cable...")
+  actionCableConsumer.connect('/cable', { user_id: user_id })
+
+  // Создаем подписку на GameChannel
+  console.log("🔗 [subscribeToGameUpdates] Creating subscription to GameChannel...")
+  gameSubscription = actionCableConsumer.subscribe('GameChannel', {
+    game_id: data_game.id
+  })
+
+  // Обработчики событий подписки
+  gameSubscription.connected = () => {
+    console.log("🎮 [subscribeToGameUpdates] ✅ Connected to game channel")
+  }
+
+  gameSubscription.disconnected = () => {
+    console.log("❌ [subscribeToGameUpdates] Disconnected from game channel")
+    // При отключении переходим на fallback polling
+    setTimeout(() => {
+      if (!gameSubscription || actionCableConsumer.cable?.readyState !== WebSocket.OPEN) {
+        console.log("🔄 [subscribeToGameUpdates] Falling back to polling due to WebSocket disconnect")
+        timeoutGameWaitPolling()
+      }
+    }, 2000)
+  }
+
+  gameSubscription.received = (data) => {
+    console.log("🎮 [subscribeToGameUpdates] WebSocket game update received:", data)
+    handleGameUpdate(data)
+  }
+  
+  console.log("🔗 [subscribeToGameUpdates] Subscription setup completed")
+}
+
+// Fallback функция с polling (оригинальная логика)
+function timeoutGameWaitPolling() {
+  console.log("🔄 Using polling for game updates...")
+  
   timeout_game_wait = setInterval(() => {
     sendRequest('post', 'get_update_game_ready', {game_id: data_game.id})
       .then(data => {
-        console.log("🎮 get_update_game_ready ", data)
-        setGameUsers(data.users)
-        setUsersReady(data.game, data.users)
-
-        if (data.ready_to_start) {
-          setTimeout(() => {
-            div_my_mems.style.display = "flex"
-          }, 550)
-
+        console.log("🎮 get_update_game_ready (polling)", data)
+        handleGameUpdate(data)
+      })
+      .catch(err => {
+        console.log("❌ Polling error:", err)
+        // При ошибке polling пробуем переключиться обратно на веб-сокеты
+        if (isWebSocketsEnabled) {
           clearInterval(timeout_game_wait)
-
-          //document.getElementById("div_round_result").display = "block"
-          //Array.from(document.getElementsByClassName("div_mem")).forEach(element => {
-          //  element.style.display = "flex"
-          //})
-          timeoutRoundWait()
+          setTimeout(() => subscribeToGameUpdates(), 3000)
         }
       })
-      .catch(err => console.log(err))
   }, UPDATE_TIME)
+}
+
+// Общая функция обработки обновлений игры (для веб-сокетов и polling)
+function handleGameUpdate(data) {
+  console.log("🎯 [handleGameUpdate] Processing game update:", data)
+  console.log("🎯 [handleGameUpdate] Users count:", data.users?.length, "Ready to start:", data.ready_to_start)
+  
+  setGameUsers(data.users)
+  setUsersReady(data.game, data.users)
+
+  if (data.ready_to_start) {
+    console.log("🎯 [handleGameUpdate] Game is ready to start! Starting game...")
+    setTimeout(() => {
+      div_my_mems.style.display = "flex"
+      console.log("🎯 [handleGameUpdate] Showing mems selection")
+    }, 550)
+
+    // Отключаем обновления - игра началась
+    if (gameSubscription) {
+      console.log("🎯 [handleGameUpdate] Unsubscribing from game updates")
+      gameSubscription.unsubscribe()
+      gameSubscription = null
+    }
+    if (timeout_game_wait) {
+      console.log("🎯 [handleGameUpdate] Clearing polling timeout")
+      clearInterval(timeout_game_wait)
+      timeout_game_wait = null
+    }
+
+    timeoutRoundWait()
+  } else {
+    console.log("🎯 [handleGameUpdate] Game not ready yet, continuing to wait...")
+  }
 }
 
 function setGameUsers(users){
@@ -1110,7 +1246,3 @@ function deleteCookie( name ) {
   document.cookie = name + '=undefined; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/';
 }
 
-
-/******/ })()
-;
-//# sourceMappingURL=app.js.map
