@@ -250,13 +250,25 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
     // Страница скрыта - отключаем веб-сокеты для экономии ресурсов
     if (gameSubscription) {
+      console.log('🔄 [visibilitychange] Page hidden - unsubscribing from game channel')
       gameSubscription.unsubscribe()
       gameSubscription = null
     }
   } else {
     // Страница снова видима - переподключаемся если нужно
-    if (isWebSocketsEnabled && data_game && data_game.id && !gameSubscription) {
+    console.log('🔄 [visibilitychange] Page visible - checking if reconnection needed')
+    console.log('🔄 [visibilitychange] WebSockets enabled:', isWebSocketsEnabled)
+    console.log('🔄 [visibilitychange] Game data exists:', !!data_game?.id)
+    console.log('🔄 [visibilitychange] Game subscription exists:', !!gameSubscription)
+    console.log('🔄 [visibilitychange] Cable connection state:', actionCableConsumer.cable?.readyState)
+    
+    // Переподключаемся только если нет активной подписки И нет активного соединения
+    if (isWebSocketsEnabled && data_game && data_game.id && !gameSubscription && 
+        (!actionCableConsumer.cable || actionCableConsumer.cable.readyState !== WebSocket.OPEN)) {
+      console.log('🔄 [visibilitychange] Reconnection needed - scheduling reconnect')
       setTimeout(() => subscribeToGameUpdates(), 1000)
+    } else {
+      console.log('🔄 [visibilitychange] Reconnection not needed - connection is active')
     }
   }
 })

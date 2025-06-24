@@ -15,6 +15,8 @@ class Game < ApplicationRecord
     close: 'close'
   }
 
+  after_create :add_bot
+
   def ready_progress_wait
     100 - (100 * (Time.now.to_i - self.updated_at.to_i).to_f / READY_TO_START_DURATION).to_i
   end
@@ -24,18 +26,9 @@ class Game < ApplicationRecord
   end
 
   def add_bot
-    add = false
-    add = true if self.game_users.count == 1 && self.ready_progress_wait < 70
-    add = true if self.game_users.count == 2 && self.ready_progress_wait < 40
-    add = true if self.game_users.count == 3 && self.ready_progress_wait < 30
-
-    if add
-      bot = User.where(bot: true).where.not(id: self.game_users.pluck(:user_id)).sample
-      if bot.present?
-        bot.update(energy: bot.energy + 100)
-        self.join_to_game(bot)
-      end
-    end
+    BotJoinGameJob.set(wait: (READY_TO_START_DURATION * 0.35).seconds).perform_later(self.id)
+    BotJoinGameJob.set(wait: (READY_TO_START_DURATION * 0.6).seconds).perform_later(self.id)
+    BotJoinGameJob.set(wait: (READY_TO_START_DURATION * 0.95).seconds).perform_later(self.id)
   end
 
   def join_to_game(user)
