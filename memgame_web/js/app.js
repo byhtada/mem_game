@@ -238,6 +238,8 @@ const UPDATE_TIME = 1000;
 
 // WebSocket переменные для управления подписками
 let gameSubscription = null;
+let roundSubscription = null;
+let voteSubscription = null;
 let isWebSocketsEnabled = true; // Флаг для включения/отключения веб-сокетов
 
 // Обработчики для отключения веб-сокетов при уходе со страницы
@@ -254,19 +256,40 @@ document.addEventListener('visibilitychange', () => {
       gameSubscription.unsubscribe()
       gameSubscription = null
     }
+    if (roundSubscription) {
+      console.log('🔄 [visibilitychange] Page hidden - unsubscribing from round channel')
+      roundSubscription.unsubscribe()
+      roundSubscription = null
+    }
+    if (voteSubscription) {
+      console.log('🔄 [visibilitychange] Page hidden - unsubscribing from vote channel')
+      voteSubscription.unsubscribe()
+      voteSubscription = null
+    }
   } else {
     // Страница снова видима - переподключаемся если нужно
     console.log('🔄 [visibilitychange] Page visible - checking if reconnection needed')
     console.log('🔄 [visibilitychange] WebSockets enabled:', isWebSocketsEnabled)
     console.log('🔄 [visibilitychange] Game data exists:', !!data_game?.id)
     console.log('🔄 [visibilitychange] Game subscription exists:', !!gameSubscription)
+    console.log('🔄 [visibilitychange] Round subscription exists:', !!roundSubscription)
+    console.log('🔄 [visibilitychange] Vote subscription exists:', !!voteSubscription)
     console.log('🔄 [visibilitychange] Cable connection state:', actionCableConsumer.cable?.readyState)
     
     // Переподключаемся только если нет активной подписки И нет активного соединения
-    if (isWebSocketsEnabled && data_game && data_game.id && !gameSubscription && 
+    if (isWebSocketsEnabled && data_game && data_game.id && !gameSubscription && !roundSubscription && !voteSubscription && 
         (!actionCableConsumer.cable || actionCableConsumer.cable.readyState !== WebSocket.OPEN)) {
       console.log('🔄 [visibilitychange] Reconnection needed - scheduling reconnect')
-      setTimeout(() => subscribeToGameUpdates(), 1000)
+      setTimeout(() => {
+        // Переподключаемся к нужному типу обновлений в зависимости от состояния игры
+        if (data_game.state === 'registration') {
+          subscribeToGameUpdates()
+        } else if (data_game.state === 'playing') {
+          // Определяем нужный канал в зависимости от состояния раунда
+          // TODO: добавить логику определения состояния раунда
+          subscribeToRoundUpdates()
+        }
+      }, 1000)
     } else {
       console.log('🔄 [visibilitychange] Reconnection not needed - connection is active')
     }
@@ -280,6 +303,18 @@ function disconnectWebSocket() {
     console.log('🔌 [disconnectWebSocket] Unsubscribing from game channel');
     gameSubscription.unsubscribe()
     gameSubscription = null
+  }
+  
+  if (roundSubscription) {
+    console.log('🔌 [disconnectWebSocket] Unsubscribing from round channel');
+    roundSubscription.unsubscribe()
+    roundSubscription = null
+  }
+  
+  if (voteSubscription) {
+    console.log('🔌 [disconnectWebSocket] Unsubscribing from vote channel');
+    voteSubscription.unsubscribe()
+    voteSubscription = null
   }
   
   if (actionCableConsumer) {
@@ -669,38 +704,132 @@ function cutString(str, length) {
 const progress_comment = document.getElementById("progress_comment")
 
 function timeoutRoundWait(){
+  // Отключаем старый polling если он был активен
   if (timeout_round_wait != null){
     clearInterval(timeout_round_wait)
   }
+
   progress_comment.innerText = "Ожидаем мемы..."
 
+  // Используем веб-сокеты если они включены, иначе fallback к polling
+  if (isWebSocketsEnabled) {
+    subscribeToRoundUpdates()
+  } else {
+    timeoutRoundWaitPolling()
+  }
+}
+
+// Новая функция для подписки на веб-сокет обновления раунда
+function subscribeToRoundUpdates() {
+  console.log("🔗 [subscribeToRoundUpdates] Starting WebSocket connection for round updates...")
+  console.log("🔗 [subscribeToRoundUpdates] Game ID:", data_game?.id, "User ID:", user_id)
+  
+  // Проверяем наличие необходимых данных
+  if (!data_game || !data_game.id) {
+    console.error("❌ [subscribeToRoundUpdates] No game data available");
+    return;
+  }
+  
+  if (!user_id) {
+    console.error("❌ [subscribeToRoundUpdates] No user_id available");
+    return;
+  }
+  
+  // Отписываемся от предыдущей подписки если она была
+  if (roundSubscription) {
+    console.log("🔗 [subscribeToRoundUpdates] Unsubscribing from previous subscription")
+    roundSubscription.unsubscribe()
+    roundSubscription = null
+  }
+
+  // Включаем автоматическое переподключение
+  actionCableConsumer.shouldReconnect = true;
+
+  // Подключаемся к Action Cable
+  console.log("🔗 [subscribeToRoundUpdates] Connecting to Action Cable...")
+  actionCableConsumer.connect('/cable', { user_id: user_id })
+
+  // Создаем подписку на RoundChannel
+  console.log("🔗 [subscribeToRoundUpdates] Creating subscription to RoundChannel...")
+  roundSubscription = actionCableConsumer.subscribe('RoundChannel', {
+    game_id: data_game.id
+  })
+
+  // Обработчики событий подписки
+  roundSubscription.connected = () => {
+    console.log("🎮 [subscribeToRoundUpdates] ✅ Connected to round channel")
+  }
+
+  roundSubscription.disconnected = () => {
+    console.log("❌ [subscribeToRoundUpdates] Disconnected from round channel")
+    // При отключении переходим на fallback polling
+    setTimeout(() => {
+      if (!roundSubscription || actionCableConsumer.cable?.readyState !== WebSocket.OPEN) {
+        console.log("🔄 [subscribeToRoundUpdates] Falling back to polling due to WebSocket disconnect")
+        timeoutRoundWaitPolling()
+      }
+    }, 2000)
+  }
+
+  roundSubscription.received = (data) => {
+    console.log("🎮 [subscribeToRoundUpdates] WebSocket round update received:", data)
+    handleRoundUpdate(data)
+  }
+  
+  console.log("🔗 [subscribeToRoundUpdates] Subscription setup completed")
+}
+
+// Fallback polling функция (оригинальный код)
+function timeoutRoundWaitPolling(){
+  console.log("🔄 [timeoutRoundWaitPolling] Starting polling fallback")
+  
   timeout_round_wait = setInterval(() => {
     sendRequest('post', 'get_round_update', {game_id: data_game.id})
       .then(data => {
         console.log("get_round_update ", data)
-
-        game_question.innerText = data.question
-        //game_question.innerText = ""
-        if (data.round_progress_wait > 95) {
-          //typeText(game_question, data.question)
-        }
-
-        progress_line.style.width = data.round_progress_wait + "%"
-        container_progress_line.style.display = 'block'
-        leaveGame(data.users)
-        setGameUsers(data.users)
-        setMyMems(data.my_mems)
-
-        if (data.ready_to_open) {
-          data_round = data.round
-          clearInterval(timeout_round_wait)
-          round_result = data.mems
-          showRoundMems()
-        }
-
+        handleRoundUpdate(data)
       })
       .catch(err => console.log(err))
   }, UPDATE_TIME)
+}
+
+// Общий обработчик обновлений раунда (для WebSocket и polling)
+function handleRoundUpdate(data) {
+  console.log("🎮 [handleRoundUpdate] Processing round update:", data)
+
+  game_question.innerText = data.question
+  //game_question.innerText = ""
+  if (data.round_progress_wait > 95) {
+    //typeText(game_question, data.question)
+  }
+
+  progress_line.style.width = data.round_progress_wait + "%"
+  container_progress_line.style.display = 'block'
+  leaveGame(data.users)
+  setGameUsers(data.users)
+  
+  // my_mems приходят только при подписке, не в broadcast обновлениях
+  if (data.my_mems) {
+    setMyMems(data.my_mems)
+  }
+
+  if (data.ready_to_open) {
+    data_round = data.round
+    
+    // Отключаем WebSocket подписку и polling
+    if (roundSubscription) {
+      console.log("🔗 [handleRoundUpdate] Unsubscribing from round channel - round ready to open")
+      roundSubscription.unsubscribe()
+      roundSubscription = null
+    }
+    
+    if (timeout_round_wait != null){
+      clearInterval(timeout_round_wait)
+    }
+    
+    round_result = data.mems
+    showRoundMems()
+  }
 }
 
 function typeText(element, text) {
@@ -720,6 +849,11 @@ function typeText(element, text) {
 }
 
 function setMyMems(my_mems){
+  if (!my_mems || !Array.isArray(my_mems)) {
+    console.warn("🎮 [setMyMems] my_mems is not a valid array:", my_mems)
+    return
+  }
+  
   let html = ''
   my_mems.forEach(mem => {
     const in_active = mem.active ? "" : `<div class="mem_inactive"></div>`
@@ -862,34 +996,125 @@ function voteForMem(){
 
 function timeoutVotesWait(){
   console.log("Wait for vote")
+  // Отключаем старый polling если он был активен
   if (timeout_vote_wait != null){
     clearInterval(timeout_vote_wait)
   }
+  
   progress_comment.innerText = "Голосуем..."
 
+  // Используем веб-сокеты если они включены, иначе fallback к polling
+  if (isWebSocketsEnabled) {
+    subscribeToVoteUpdates()
+  } else {
+    timeoutVotesWaitPolling()
+  }
+}
+
+// Новая функция для подписки на веб-сокет обновления голосования
+function subscribeToVoteUpdates() {
+  console.log("🔗 [subscribeToVoteUpdates] Starting WebSocket connection for vote updates...")
+  console.log("🔗 [subscribeToVoteUpdates] Game ID:", data_game?.id, "User ID:", user_id)
+  
+  // Проверяем наличие необходимых данных
+  if (!data_game || !data_game.id) {
+    console.error("❌ [subscribeToVoteUpdates] No game data available");
+    return;
+  }
+  
+  if (!user_id) {
+    console.error("❌ [subscribeToVoteUpdates] No user_id available");
+    return;
+  }
+  
+  // Отписываемся от предыдущей подписки если она была
+  if (voteSubscription) {
+    console.log("🔗 [subscribeToVoteUpdates] Unsubscribing from previous subscription")
+    voteSubscription.unsubscribe()
+    voteSubscription = null
+  }
+
+  // Включаем автоматическое переподключение
+  actionCableConsumer.shouldReconnect = true;
+
+  // Подключаемся к Action Cable
+  console.log("🔗 [subscribeToVoteUpdates] Connecting to Action Cable...")
+  actionCableConsumer.connect('/cable', { user_id: user_id })
+
+  // Создаем подписку на VoteChannel
+  console.log("🔗 [subscribeToVoteUpdates] Creating subscription to VoteChannel...")
+  voteSubscription = actionCableConsumer.subscribe('VoteChannel', {
+    game_id: data_game.id
+  })
+
+  // Обработчики событий подписки
+  voteSubscription.connected = () => {
+    console.log("🎮 [subscribeToVoteUpdates] ✅ Connected to vote channel")
+  }
+
+  voteSubscription.disconnected = () => {
+    console.log("❌ [subscribeToVoteUpdates] Disconnected from vote channel")
+    // При отключении переходим на fallback polling
+    setTimeout(() => {
+      if (!voteSubscription || actionCableConsumer.cable?.readyState !== WebSocket.OPEN) {
+        console.log("🔄 [subscribeToVoteUpdates] Falling back to polling due to WebSocket disconnect")
+        timeoutVotesWaitPolling()
+      }
+    }, 2000)
+  }
+
+  voteSubscription.received = (data) => {
+    console.log("🎮 [subscribeToVoteUpdates] WebSocket vote update received:", data)
+    handleVoteUpdate(data)
+  }
+  
+  console.log("🔗 [subscribeToVoteUpdates] Subscription setup completed")
+}
+
+// Fallback polling функция (оригинальный код)
+function timeoutVotesWaitPolling(){
+  console.log("🔄 [timeoutVotesWaitPolling] Starting polling fallback")
+  
   timeout_vote_wait = setInterval(() => {
     sendRequest('post', 'get_vote_update', {game_id: data_game.id})
       .then(data => {
         console.log("get_vote_update ", data)
-       // setGameUsers(data.users)
-        setVotes(data.mems)
-        progress_line.style.width = data.vote_progress_wait + "%"
-        container_progress_line.style.display = 'block'
-        leaveGame(data.users)
-
-        if (data.vote_finish) {
-          clearInterval(timeout_vote_wait)
-          setGameUsers(data.users)
-
-          if (data.finish_game){
-            finishGame()
-          } else {
-            finishRound()
-          }
-        }
+        handleVoteUpdate(data)
       })
       .catch(err => console.log(err))
   }, UPDATE_TIME)
+}
+
+// Общий обработчик обновлений голосования (для WebSocket и polling)
+function handleVoteUpdate(data) {
+  console.log("🎮 [handleVoteUpdate] Processing vote update:", data)
+
+  // setGameUsers(data.users)
+  setVotes(data.mems)
+  progress_line.style.width = data.vote_progress_wait + "%"
+  container_progress_line.style.display = 'block'
+  leaveGame(data.users)
+
+  if (data.vote_finish) {
+    // Отключаем WebSocket подписку и polling
+    if (voteSubscription) {
+      console.log("🔗 [handleVoteUpdate] Unsubscribing from vote channel - voting finished")
+      voteSubscription.unsubscribe()
+      voteSubscription = null
+    }
+    
+    if (timeout_vote_wait != null){
+      clearInterval(timeout_vote_wait)
+    }
+    
+    setGameUsers(data.users)
+
+    if (data.finish_game){
+      finishGame()
+    } else {
+      finishRound()
+    }
+  }
 }
 
 function setVotes(data){

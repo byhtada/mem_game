@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Game < ApplicationRecord
-  ROUNDS = 5
+  ROUNDS = 3
   READY_TO_START_DURATION = 10
   READY_TO_RESTART_DURATION = 15000
 
@@ -34,8 +34,8 @@ class Game < ApplicationRecord
   def join_to_game(user)
     Rails.logger.info "🎮 [Game#join_to_game] User #{user.id} (#{user.name}) joining game #{id}"
     
-    return false if user.energy - 75 < 0
-    user.update(energy: user.energy - 75)
+    return false if user.energy - 5 < 0
+    user.update(energy: user.energy - 5)
 
     game_user = GameUser.create(
       user_id:    user.id,
@@ -49,12 +49,13 @@ class Game < ApplicationRecord
     Rails.logger.info "🎮 [Game#join_to_game] Game #{id} now has #{game_users.count}/#{participants} players"
 
     # Отправляем обновление всем подписчикам после добавления игрока
-    broadcast_game_update
 
     if self.game_users.count == self.participants
       Rails.logger.info "🎮 [Game#join_to_game] Game #{id} is full, starting game!"
       self.start_game
     end
+
+    broadcast_game_update
 
     true
   end
@@ -92,6 +93,8 @@ class Game < ApplicationRecord
       min = ::Round::ROUND_DURATION * 0.2
       max = ::Round::ROUND_DURATION * 0.5
       delay = rand(min..max)
+
+      Rails.logger.info "🎮 [Game#create_round] BotRoundJob delay: #{delay.seconds} seconds"
       BotRoundJob.set(wait: delay.seconds).perform_later(round.id, game_user.id)
     end
   end

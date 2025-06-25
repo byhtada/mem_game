@@ -55,7 +55,6 @@ class RoundsController < ApplicationController
     render json: {}
   end
 
-
   def start_voting
     round = Round.find(params[:round_id])
     if round.start_voting == 0
@@ -116,6 +115,9 @@ class RoundsController < ApplicationController
     current_votes = round[:"mem_#{params[:user_num]}_votes"]
     round.update("mem_#{params[:user_num]}_votes": current_votes + 1)
 
+    round.finish_voting
+
+    round.broadcast_vote_update
     render json: { }
   end
 

@@ -1,5 +1,5 @@
 class BotJoinGameJob < ApplicationJob
-  queue_as :default
+  queue_as :bot_join_sequential
 
   def perform(game_id)
     game = Game.find(game_id)
