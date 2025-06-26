@@ -112,6 +112,9 @@ class GamesController < ApplicationController
             game = Game.find(params[:game_id])
             game_user = GameUser.find_by(user_id: @user.id, game_id: game.id)
             game_user.update(ready_to_restart: true)
+            
+            # Отправляем обновление через WebSocket после готовности игрока к рестарту
+            game.broadcast_restart_update if game.state == 'finishing'
     
             render json: {}
         end

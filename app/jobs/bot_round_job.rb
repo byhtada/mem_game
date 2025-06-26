@@ -1,6 +1,4 @@
 class BotRoundJob < ApplicationJob
-  queue_as :bot_sequential
-
   def perform(round_id, game_user_id)
     round = Round.find(round_id)
     game_user = GameUser.find(game_user_id)

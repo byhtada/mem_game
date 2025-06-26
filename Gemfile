@@ -27,7 +27,6 @@ gem 'russian'
 
 gem 'delayed_job_active_record'
 gem 'daemons'
-gem 'sidekiq'
 gem 'dotenv-rails'
 
 

@@ -1,6 +1,4 @@
 class BotVoteJob < ApplicationJob
-  queue_as :bot_vote_sequential
-
   def perform(round_id)
     Rails.logger.info "🎮 [BotVoteJob] #{Time.now.to_f} Starting job for round #{round_id}"
 

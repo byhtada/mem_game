@@ -38,7 +38,7 @@ Rails.application.configure do
   # Включаем обслуживание статических файлов для фронтенда
   config.public_file_server.enabled = true
 
-  config.active_job.queue_adapter = :sidekiq
+  config.active_job.queue_adapter = :delayed_job
 
   # Don't care if the mailer can't send.
   config.action_mailer.raise_delivery_errors = false

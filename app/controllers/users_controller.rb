@@ -4,7 +4,7 @@ class UsersController < ApplicationController
   
   puts "USERS_CONTROLLER"
   def get_user_data
-    render json: { user: @user }
+    render json: { user: @user, constants: get_constants }
   end
 
   def save_user_data
@@ -52,5 +52,15 @@ class UsersController < ApplicationController
     end
 
     render json: {friends: friends}
+  end
+
+  private
+
+  def get_constants
+    {
+      round_duration: ::Round::ROUND_DURATION * 1000,
+      vote_duration: ::Round::VOTE_DURATION * 1000,
+      restart_duration: ::Game::READY_TO_RESTART_DURATION * 1000
+    }
   end
 end

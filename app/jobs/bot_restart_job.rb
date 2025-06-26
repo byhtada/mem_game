@@ -1,10 +1,12 @@
 class BotRestartJob < ApplicationJob
-  queue_as :default
-
   def perform(game_id, game_user_id)
     game = Game.find(game_id)
     game_user = GameUser.find(game_user_id)
     
-    rand(0..100) > 80 ? game_user.update(ready_to_restart: true) : nil
+    if rand(0..100) > 20
+      game_user.update(ready_to_restart: true)
+      # Отправляем обновление через WebSocket после готовности бота к рестарту
+      game.broadcast_restart_update if game.state == 'finishing'
+    end
   end
 end

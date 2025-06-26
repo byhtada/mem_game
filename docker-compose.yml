@@ -8,7 +8,6 @@ services:
       POSTGRES_PASSWORD: password
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5432:5432"
     healthcheck:
@@ -17,18 +16,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # Redis для Sidekiq
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+
 
   # Rails приложение
   web:
@@ -38,11 +26,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      redis:
-        condition: service_healthy
     environment:
       DATABASE_URL: postgres://postgres:password@db:5432/memgame_development
-      REDIS_URL: redis://redis:6379/0
       RAILS_ENV: development
       RAILS_MAX_THREADS: 5
     volumes:
@@ -56,77 +41,23 @@ services:
         bundle exec rails server -b 0.0.0.0
       "
 
-  # Sidekiq для обычных фоновых задач
-  sidekiq:
+  # Delayed Job worker (единый для всех задач)
+  delayed_job:
     build: .
     depends_on:
       db:
         condition: service_healthy
-      redis:
-        condition: service_healthy
     environment:
       DATABASE_URL: postgres://postgres:password@db:5432/memgame_development
-      REDIS_URL: redis://redis:6379/0
       RAILS_ENV: development
       TELEGRAM_BOT_TOKEN: "123456789:AAAA-fake-token-for-development"
+      TZ: "Europe/Moscow"
     volumes:
       - .:/rails
       - bundle_cache:/usr/local/bundle
-    command: ["bundle", "exec", "sidekiq", "-q", "default"]
-
-  # Sidekiq для последовательного выполнения bot джобов
-  sidekiq_bot_sequential:
-    build: .
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    environment:
-      DATABASE_URL: postgres://postgres:password@db:5432/memgame_development
-      REDIS_URL: redis://redis:6379/0
-      RAILS_ENV: development
-      TELEGRAM_BOT_TOKEN: "123456789:AAAA-fake-token-for-development"
-    volumes:
-      - .:/rails
-      - bundle_cache:/usr/local/bundle
-    command: ["bundle", "exec", "sidekiq", "-q", "bot_sequential", "-c", "1"]
-
-  # Sidekiq для последовательного выполнения bot голосований
-  sidekiq_bot_vote_sequential:
-    build: .
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    environment:
-      DATABASE_URL: postgres://postgres:password@db:5432/memgame_development
-      REDIS_URL: redis://redis:6379/0
-      RAILS_ENV: development
-      TELEGRAM_BOT_TOKEN: "123456789:AAAA-fake-token-for-development"
-    volumes:
-      - .:/rails
-      - bundle_cache:/usr/local/bundle
-    command: ["bundle", "exec", "sidekiq", "-q", "bot_vote_sequential", "-c", "1"]
-
-  # Sidekiq для последовательного присоединения ботов к играм
-  sidekiq_bot_join_sequential:
-    build: .
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    environment:
-      DATABASE_URL: postgres://postgres:password@db:5432/memgame_development
-      REDIS_URL: redis://redis:6379/0
-      RAILS_ENV: development
-      TELEGRAM_BOT_TOKEN: "123456789:AAAA-fake-token-for-development"
-    volumes:
-      - .:/rails
-      - bundle_cache:/usr/local/bundle
-    command: ["bundle", "exec", "sidekiq", "-q", "bot_join_sequential", "-c", "1"]
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    command: ["bundle", "exec", "rails", "jobs:work"]
 
   # Frontend watcher для автоматической пересборки
   frontend_watcher:
@@ -142,6 +73,5 @@ services:
 
 volumes:
   postgres_data:
-  redis_data:
   bundle_cache:
   node_modules_cache: 

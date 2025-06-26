@@ -63,27 +63,8 @@ class RoundChannel < ApplicationCable::Channel
     mems = get_round_mems(game, round, users)
     round_progress_wait = round.round_progress_wait
     
-    # Обрабатываем отключение игроков при истечении времени
-    if round_progress_wait.negative? && round.state == 'play'
-      5.times do |i|
-        next if round["mem_#{i}_name"] != ''
-
-        game_user = users.select {|u| u.game_user_number == i}.first
-        
-        if game_user.present?
-          game_user.destroy
-          game.update(participants: game.participants - 1)
-        end
-      end
-      users = GameUsersService.new(game.reload, current_user).call
-    end
-
     ready_to_open = mems.length == game.participants
-    
-    if ready_to_open
-      round.update(state: 'vote')
-    end
-    
+
     data = {
       ready_to_open: ready_to_open,
       my_mems: my_mems,
@@ -91,7 +72,8 @@ class RoundChannel < ApplicationCable::Channel
       question: round.question_text,
       round: round,
       users: users,
-      round_progress_wait: round_progress_wait
+      round_progress_wait: round_progress_wait,
+      round_progress_left: (Round::ROUND_DURATION - (Time.now.to_i - round.created_at.to_i)) * 1000
     }
     
     Rails.logger.info "📤 [RoundChannel#send_round_update] Data: #{data.inspect}"

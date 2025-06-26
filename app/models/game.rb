@@ -3,7 +3,7 @@
 class Game < ApplicationRecord
   ROUNDS = 3
   READY_TO_START_DURATION = 10
-  READY_TO_RESTART_DURATION = 15000
+  READY_TO_RESTART_DURATION = 15
 
   has_many :rounds
   has_many :game_users
@@ -26,9 +26,9 @@ class Game < ApplicationRecord
   end
 
   def add_bot
-    BotJoinGameJob.set(wait: (READY_TO_START_DURATION * 0.35).seconds).perform_later(self.id)
+    BotJoinGameJob.set(wait: (READY_TO_START_DURATION * 0.3).seconds).perform_later(self.id)
     BotJoinGameJob.set(wait: (READY_TO_START_DURATION * 0.6).seconds).perform_later(self.id)
-    BotJoinGameJob.set(wait: (READY_TO_START_DURATION * 0.95).seconds).perform_later(self.id)
+    BotJoinGameJob.set(wait: (READY_TO_START_DURATION * 0.8).seconds).perform_later(self.id)
   end
 
   def join_to_game(user)
@@ -50,12 +50,12 @@ class Game < ApplicationRecord
 
     # Отправляем обновление всем подписчикам после добавления игрока
 
+    broadcast_game_update
+
     if self.game_users.count == self.participants
       Rails.logger.info "🎮 [Game#join_to_game] Game #{id} is full, starting game!"
       self.start_game
     end
-
-    broadcast_game_update
 
     true
   end
@@ -65,9 +65,6 @@ class Game < ApplicationRecord
       user.update(game_user_number: i)
     end
 
-    # Отправляем последнее обновление перед сменой состояния
-    broadcast_game_update
-    
     self.update(state: 'playing')
     self.create_round
   end
@@ -97,8 +94,9 @@ class Game < ApplicationRecord
       Rails.logger.info "🎮 [Game#create_round] BotRoundJob delay: #{delay.seconds} seconds"
       BotRoundJob.set(wait: delay.seconds).perform_later(round.id, game_user.id)
     end
-  end
 
+    RoundClearJob.set(wait: ::Round::ROUND_DURATION).perform_later(self.id, self.current_round)
+  end
 
   def winners
     max_points = GameUser.where(game_id: self.id).sort{|f,s| f.game_points <=> s.game_points}.last.game_points
@@ -155,6 +153,17 @@ class Game < ApplicationRecord
     Rails.logger.info "🎮 [Game#broadcast_game_update] Broadcast completed for Game #{id}"
   end
 
+  def broadcast_restart_update
+    # Отправляем обновления для игр в состоянии finishing (после завершения игры)
+    Rails.logger.info "🔄 [Game#broadcast_restart_update] Game #{id} state: #{state}"
+    return unless state == 'finishing'
+    
+    data = build_restart_update_data
+    Rails.logger.info "🔄 [Game#broadcast_restart_update] Broadcasting restart to Game #{id}: #{data.inspect}"
+    RestartChannel.broadcast_to(self, data)
+    Rails.logger.info "🔄 [Game#broadcast_restart_update] Restart broadcast completed for Game #{id}"
+  end
+
   private
 
   def build_game_update_data
@@ -164,6 +173,36 @@ class Game < ApplicationRecord
       users: users_for_broadcast,
       game: self.as_json,
       my_mems: []
+    }
+  end
+
+  def build_restart_update_data
+    restart_progress_wait = self.restart_progress_wait
+    new_game = nil
+
+    # Логика рестарта (из контроллера)
+    if restart_progress_wait.negative? || users.select {|u| u.ready_to_restart}.count == participants
+      if state != 'close'
+        new_game = Game.create(participants: 4)
+
+        users.each do |user|
+          next unless user.ready_to_restart
+
+          new_game.join_to_game(User.find(user.user_id))
+        end
+        
+        update(state: 'close')
+        new_game.update(state: 'playing') if new_game.participants == new_game.users.count
+      end
+    end
+
+    {
+      restart_progress_wait: restart_progress_wait,
+      ready_to_start: reload.state == 'close',
+      users: users_for_broadcast,
+      new_game: new_game&.as_json,
+      game: self.as_json,
+      winners_ids: winners.pluck(:game_user_number),
     }
   end
 

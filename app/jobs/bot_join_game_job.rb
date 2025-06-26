@@ -1,14 +1,13 @@
 class BotJoinGameJob < ApplicationJob
-  queue_as :bot_join_sequential
-
   def perform(game_id)
+    Rails.logger.info "🤖 [BotJoinGameJob] Starting job for game #{game_id}"
     game = Game.find(game_id)
     game_users = game.game_users
 
     add = false
-    add = true if game_users.count == 1 && game.ready_progress_wait < 70
-    add = true if game_users.count == 2 && game.ready_progress_wait < 40
-    add = true if game_users.count == 3 && game.ready_progress_wait < 30
+    add = true if game_users.count == 1
+    add = true if game_users.count == 2
+    add = true if game_users.count == 3
 
     if add && game_users.count < game.participants
       bot = User.where(bot: true).where.not(id: game_users.pluck(:user_id)).sample

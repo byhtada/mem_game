@@ -268,12 +268,6 @@ GEM
     rubyzip (2.4.1)
     russian (0.6.0)
       i18n (>= 0.5.0)
-    sidekiq (8.0.4)
-      connection_pool (>= 2.5.0)
-      json (>= 2.9.0)
-      logger (>= 1.6.2)
-      rack (>= 3.1.0)
-      redis-client (>= 0.23.2)
     stringio (3.1.7)
     telegram-bot-ruby (2.4.0)
       dry-struct (~> 1.6)
@@ -314,7 +308,6 @@ DEPENDENCIES
   rest-client
   roo
   russian
-  sidekiq
   telegram-bot-ruby
   tzinfo-data
 

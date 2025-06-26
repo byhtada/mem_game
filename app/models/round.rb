@@ -52,17 +52,16 @@ class Round < ApplicationRecord
 
     mems, total_votes = get_round_votes_for_broadcast(users)
 
-    finish_round = total_votes >= self.game.participants || vote_progress_wait.negative?
+    finish_round = total_votes >= self.game.participants
 
     if finish_round && self.state == 'vote'
       self.update(state: 'close')
+      CalculateRoundResultService.new(self.game).call
 
       if self.round_num >= Game::ROUNDS
-        CalculateRoundResultService.new(self.game).call
         self.game.finish_game
       else
         self.game.create_round
-        round = Round.find_by(game_id: self.game.id, round_num: self.game.current_round)
       end
     end
   end
@@ -84,13 +83,14 @@ class Round < ApplicationRecord
     return unless state == 'vote' && self.game.state == 'playing'
     
     Rails.logger.info "🎮 [Round#broadcast_vote_update] Broadcasting vote update for game #{game_id}"
-    VoteChannel.broadcast_to(self.game, build_vote_update_data)
     finish_voting
+    VoteChannel.broadcast_to(self.game, build_vote_update_data)
+    
     Rails.logger.info "🎮 [Round#broadcast_vote_update] Broadcast completed for round #{id}"
   end
 
   def build_round_update_data
-    users = self.game.game_users.reload
+    users = self.game.users
     
     # Получаем мемы раунда
     mems = get_round_mems_for_broadcast(users)
@@ -105,12 +105,13 @@ class Round < ApplicationRecord
       question: self.question_text,
       round: self,
       users: users,
-      round_progress_wait: round_progress_wait
+      round_progress_wait: round_progress_wait,
+      round_progress_left: (ROUND_DURATION - (Time.now.to_i - self.created_at.to_i)) * 1000
     }
   end
 
   def build_vote_update_data
-    users = self.game.game_users
+    users = self.game.users
     
     # Получаем данные голосования
     Rails.logger.info "🎮 [Round#build_vote_update_data] Round #{self.inspect} "
@@ -124,7 +125,6 @@ class Round < ApplicationRecord
     finish_round = total_votes >= self.game.participants || vote_progress_wait.negative?
     
     if finish_round
-      CalculateRoundResultService.new(game).call
       if self.round_num >= Game::ROUNDS
         finish_game = true
       end
@@ -133,9 +133,10 @@ class Round < ApplicationRecord
     {
       mems: mems,
       round: self,
-      users: users.reload,
+      users: self.game.users,
       vote_finish: finish_round,
       vote_progress_wait: vote_progress_wait,
+      vote_progress_left: (VOTE_DURATION - (Time.now.to_i - self.start_voting.to_i)) * 1000,
       finish_game: finish_game
     }
   end
@@ -143,8 +144,6 @@ class Round < ApplicationRecord
   private
 
   def get_round_mems_for_broadcast(users)
-    users = users.reload
-
     mems = []
     5.times do |i|
       next if self[:"mem_#{i}_name"] == ''
@@ -209,13 +208,5 @@ class Round < ApplicationRecord
     mems = mems.sort { |f, s| f[:time] <=> s[:time] }
 
     [mems, total_votes]
-  end
-
-  def create_round_for_broadcast(game)
-    finish_game = game.current_round >= Game::ROUNDS
-
-    CalculateRoundResultService.new(game).call
-
-    game.create_round if finish_game === false
   end
 end

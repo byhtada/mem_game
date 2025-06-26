@@ -63,27 +63,14 @@ class VoteChannel < ApplicationCable::Channel
     
     # Проверяем завершение голосования
     finish_game = false
-    finish_round = total_votes >= game.participants || vote_progress_wait.negative?
-    
-    if finish_round && round.state == 'vote'
-      round.update(state: 'close')
-
-      if round.round_num >= Game::ROUNDS
-        finish_game = true
-        CalculateRoundResultService.new(game).call
-        game.finish_game
-      else
-        create_round(game) 
-        round = Round.find_by(game_id: game.id, round_num: game.current_round)
-      end
-    end
     
     data = {
       mems: mems,
       round: round,
       users: users,
-      vote_finish: finish_round,
+      vote_finish: false,
       vote_progress_wait: vote_progress_wait,
+      vote_progress_left: (Round::VOTE_DURATION - (Time.now.to_i - round.start_voting.to_i)) * 1000,
       finish_game: finish_game
     }
     
@@ -114,13 +101,5 @@ class VoteChannel < ApplicationCable::Channel
     mems = mems.sort { |f, s| f[:time] <=> s[:time] }
 
     [mems, total_votes]
-  end
-
-  def create_round(game)
-    finish_game = game.current_round >= Game::ROUNDS
-
-    CalculateRoundResultService.new(game).call
-
-    game.create_round if finish_game === false
   end
 end 

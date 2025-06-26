@@ -90,7 +90,6 @@ Rails.application.routes.draw do
   post  :get_round_update,   controller: 'rounds'
   post  :send_round_mem,   controller: 'rounds'
   post  :start_voting,   controller: 'rounds'
-  post  :get_vote_update,   controller: 'rounds'
   post  :vote_for_mem,   controller: 'rounds'
 
 
