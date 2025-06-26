@@ -44,8 +44,10 @@ class RestartChannel < ApplicationCable::Channel
     restart_progress_wait = game.restart_progress_wait
     new_game = nil
 
+    ids_ready_to_restart = game.users.select {|u| u.ready_to_restart}.pluck(:user_id)
+
     # Логика рестарта (из контроллера)
-    if restart_progress_wait.negative? || game.users.select {|u| u.ready_to_restart}.count == game.participants
+    if restart_progress_wait.negative? || ids_ready_to_restart.count == game.participants
       if game.state != 'close'
         new_game = Game.create(participants: 4)
 
@@ -56,7 +58,7 @@ class RestartChannel < ApplicationCable::Channel
         end
         
         game.update(state: 'close')
-        new_game.update(state: 'playing') if new_game.participants == new_game.users.count
+        new_game.start_game if new_game.participants == new_game.users.count
       end
     end
 
@@ -65,9 +67,11 @@ class RestartChannel < ApplicationCable::Channel
 
     data = {
       restart_progress_wait: restart_progress_wait,
+      restart_progress_left: (Game::READY_TO_RESTART_DURATION - (Time.now.to_i - game.updated_at.to_i)) * 1000,
       ready_to_start: game.reload.state == 'close',
       users: users,
       new_game: new_game&.as_json,
+      new_game_users: new_game&.users.pluck(:user_id),
       game: game.as_json,
       user_id: current_user.id,
       winners_ids: game.winners.pluck(:game_user_number),

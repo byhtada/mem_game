@@ -247,6 +247,7 @@ let gameSubscription = null;
 let roundSubscription = null;
 let voteSubscription = null;
 let restartSubscription = null;
+let newGameSubscription = null;
 let isWebSocketsEnabled = true; // Флаг для включения/отключения веб-сокетов
 
 // Обработчики для отключения веб-сокетов при уходе со страницы
@@ -571,13 +572,6 @@ function subscribeToGameUpdates() {
 
   gameSubscription.disconnected = () => {
     console.log("❌ [subscribeToGameUpdates] Disconnected from game channel")
-    // При отключении переходим на fallback polling
-    setTimeout(() => {
-      if (!gameSubscription || actionCableConsumer.cable?.readyState !== WebSocket.OPEN) {
-        console.log("🔄 [subscribeToGameUpdates] Falling back to polling due to WebSocket disconnect")
-        timeoutGameWaitPolling()
-      }
-    }, 2000)
   }
 
   gameSubscription.received = (data) => {
@@ -586,27 +580,6 @@ function subscribeToGameUpdates() {
   }
   
   console.log("🔗 [subscribeToGameUpdates] Subscription setup completed")
-}
-
-// Fallback функция с polling (оригинальная логика)
-function timeoutGameWaitPolling() {
-  console.log("🔄 Using polling for game updates...")
-  
-  timeout_game_wait = setInterval(() => {
-    sendRequest('post', 'get_update_game_ready', {game_id: data_game.id})
-      .then(data => {
-        console.log("🎮 get_update_game_ready (polling)", data)
-        handleGameUpdate(data)
-      })
-      .catch(err => {
-        console.log("❌ Polling error:", err)
-        // При ошибке polling пробуем переключиться обратно на веб-сокеты
-        if (isWebSocketsEnabled) {
-          clearInterval(timeout_game_wait)
-          setTimeout(() => subscribeToGameUpdates(), 3000)
-        }
-      })
-  }, UPDATE_TIME)
 }
 
 // Общая функция обработки обновлений игры (для веб-сокетов и polling)
@@ -645,6 +618,12 @@ function handleGameUpdate(data) {
 function setGameUsers(users){
   let html = ""
 
+  const currentUserIndex = users.findIndex(user => user.user_id === user_id)
+  if (currentUserIndex > 0) {
+    const currentUser = users.splice(currentUserIndex, 1)[0]
+    users.unshift(currentUser)
+  }
+
   users.forEach(user => {
     let game_points  = user.game_points
 
@@ -666,6 +645,17 @@ function setGameUsers(users){
   }
 
   document.getElementById("div_players").innerHTML = html
+}
+
+function setUsersRoundReady(users, round){
+  const div_players = document.getElementById("div_players")
+
+  users.forEach(user => {
+    if (round[`mem_${user.game_user_number}_name`] != ""){
+      const container = div_players.querySelector(`.div_player[data-id="${user.game_user_number}"]`)
+      container.querySelector('.user_name').innerText = "Готов"
+    }
+  })
 }
 
 function leaveGame(users){
@@ -791,6 +781,7 @@ function handleRoundUpdate(data) {
   container_progress_line.style.display = 'block'
   leaveGame(data.users)
   setGameUsers(data.users)
+  setUsersRoundReady(data.users, data.round)
 
   timeout_round_left_ms = data.round_progress_left
   setRoundProgressLeft()
@@ -802,7 +793,8 @@ function handleRoundUpdate(data) {
 
   if (data.ready_to_open) {
     data_round = data.round
-    
+    setGameUsers(data.users)
+
     // Отключаем WebSocket подписку и polling
     if (roundSubscription) {
       console.log("🔗 [handleRoundUpdate] Unsubscribing from round channel - round ready to open")
@@ -858,7 +850,7 @@ function setRestartProgressLeft(){
   timeout_restart_wait = setInterval(() => {
     timeout_restart_left_ms -= PROGRESS_INTERVAL
     if (timeout_restart_left_ms <= 0){
-      window.location.reload()
+      //window.location.reload()
     }
 
     progress_line.style.width = timeout_restart_left_ms / constants.restart_duration * 100 + "%"
@@ -1164,6 +1156,7 @@ function finishRound(){
 function finishGame(){
   document.getElementById(`div_question`).style.display = "none"
   document.getElementById(`div_round_result`).style.display = "none"
+  timeoutRestartWait()
 
   sendRequest('post', 'get_game_winner', {game_id: data_game.id})
     .then(data => {
@@ -1180,8 +1173,6 @@ function finishGame(){
 
       document.getElementById(`game_winner`).style.display = "block"
       document.getElementById(`game_winner`).innerText= `Победитель ${data.winners_names}`
-
-      timeoutRestartWait()
     })
     .catch(err => console.log(err))
 }
@@ -1208,33 +1199,22 @@ function timeoutRestartWait(){
     clearInterval(timeout_restart_wait)
   }
 
-  // Используем веб-сокеты если они включены, иначе fallback к polling
-  if (isWebSocketsEnabled) {
-    subscribeToRestartUpdates()
-  } else {
-    timeoutRestartWaitPolling()
-  }
+  subscribeToRestartUpdates()
+  //subscribeToNewGameUpdates()
 }
 
 // Новая функция для подписки на веб-сокет обновления рестарта
 function subscribeToRestartUpdates() {
-  console.log("🔗 [subscribeToRestartUpdates] Starting WebSocket connection for restart updates...")
-  console.log("🔗 [subscribeToRestartUpdates] Game ID:", data_game?.id, "User ID:", user_id)
-  
-  // Проверяем наличие необходимых данных
   if (!data_game || !data_game.id) {
-    console.error("❌ [subscribeToRestartUpdates] No game data available");
     return;
   }
   
   if (!user_id) {
-    console.error("❌ [subscribeToRestartUpdates] No user_id available");
     return;
   }
   
   // Отписываемся от предыдущей подписки если она была
   if (restartSubscription) {
-    console.log("🔗 [subscribeToRestartUpdates] Unsubscribing from previous subscription")
     restartSubscription.unsubscribe()
     restartSubscription = null
   }
@@ -1243,59 +1223,33 @@ function subscribeToRestartUpdates() {
   actionCableConsumer.shouldReconnect = true;
 
   // Подключаемся к Action Cable
-  console.log("🔗 [subscribeToRestartUpdates] Connecting to Action Cable...")
   actionCableConsumer.connect('/cable', { user_id: user_id })
 
   // Создаем подписку на RestartChannel
-  console.log("🔗 [subscribeToRestartUpdates] Creating subscription to RestartChannel...")
   restartSubscription = actionCableConsumer.subscribe('RestartChannel', {
     game_id: data_game.id
   })
 
   // Обработчики событий подписки
   restartSubscription.connected = () => {
-    console.log("🔄 [subscribeToRestartUpdates] ✅ Connected to restart channel")
   }
 
   restartSubscription.disconnected = () => {
-    console.log("❌ [subscribeToRestartUpdates] Disconnected from restart channel")
-    // При отключении переходим на fallback polling
-    setTimeout(() => {
-      if (!restartSubscription || actionCableConsumer.cable?.readyState !== WebSocket.OPEN) {
-        console.log("🔄 [subscribeToRestartUpdates] Falling back to polling due to WebSocket disconnect")
-        timeoutRestartWaitPolling()
-      }
-    }, 2000)
   }
 
   restartSubscription.received = (data) => {
-    console.log("🔄 [subscribeToRestartUpdates] WebSocket restart update received:", data)
     handleRestartUpdate(data)
   }
-  
-  console.log("🔗 [subscribeToRestartUpdates] Subscription setup completed")
-}
-
-// Fallback polling функция (оригинальный код)
-function timeoutRestartWaitPolling(){
-  console.log("🔄 [timeoutRestartWaitPolling] Starting polling fallback")
-  
-  timeout_restart_wait = setInterval(() => {
-    sendRequest('post', 'get_restart_update', {game_id: data_game.id})
-      .then(data => {
-        console.log("get_restart_update ", data)
-        handleRestartUpdate(data)
-      })
-      .catch(err => console.log(err))
-  }, UPDATE_TIME)
 }
 
 // Общий обработчик обновлений рестарта (для WebSocket и polling)
 function handleRestartUpdate(data) {
   console.log("🔄 [handleRestartUpdate] Processing restart update:", data)
 
-  progress_line.style.width = data.restart_progress_wait + "%"
   container_progress_line.style.display = 'block'
+
+  timeout_restart_left_ms = data.restart_progress_left
+  setRestartProgressLeft()
 
   setGameUsers(data.users)
   setUsersRestart(data.game, data.users)
@@ -1316,11 +1270,73 @@ function handleRestartUpdate(data) {
       clearInterval(timeout_restart_wait)
     }
 
-    if (data_game.id == data.new_game.id) {
-      window.location.reload()
+    if (data.new_game_users.includes(user_id)) {
+      startGame(data.new_game, user_id)
     } else {
-      startGame(data.new_game, data.user_id)
+      window.location.reload()
     }
+  }
+}
+
+
+// Новая функция для подписки на веб-сокет обновления рестарта
+function subscribeToNewGameUpdates() {
+  if (!data_game || !data_game.id) {
+    return;
+  }
+  
+  if (!user_id) {
+    return;
+  }
+  
+  // Отписываемся от предыдущей подписки если она была
+  if (newGameSubscription) {
+    newGameSubscription.unsubscribe()
+    newGameSubscription = null
+  }
+
+  // Включаем автоматическое переподключение
+  actionCableConsumer.shouldReconnect = true;
+
+  // Подключаемся к Action Cable
+  actionCableConsumer.connect('/cable', { user_id: user_id })
+
+  // Создаем подписку на RestartChannel
+  newGameSubscription = actionCableConsumer.subscribe('NewGameChannel', {
+    game_id: data_game.id
+  })
+
+  // Обработчики событий подписки
+  newGameSubscription.connected = () => {
+  }
+
+  newGameSubscription.disconnected = () => {
+  }
+
+  newGameSubscription.received = (data) => {
+    handleNewGameUpdate(data)
+  }
+}
+
+// Общий обработчик обновлений рестарта (для WebSocket и polling)
+function handleNewGameUpdate(data) {
+  if (restartSubscription) {
+    restartSubscription.unsubscribe()
+    restartSubscription = null
+  }
+  if (newGameSubscription) {
+    newGameSubscription.unsubscribe()
+    newGameSubscription = null
+  }
+  
+  if (timeout_restart_wait != null){
+    clearInterval(timeout_restart_wait)
+  }
+
+  if (data.users_ids.includes(user_id)) {
+    startGame(data.game, user_id)
+  } else {
+    window.location.reload()
   }
 }
 

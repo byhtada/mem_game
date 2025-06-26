@@ -323,7 +323,7 @@ monitor:
 
 # Установка и первый запуск
 setup: build
-	$(DOCKER_COMPOSE) up -d db redis
+	$(DOCKER_COMPOSE) up -d db
 	@echo "Ожидание запуска базы данных..."
 	sleep 10
 	$(DOCKER_COMPOSE) run --rm web bundle exec rails db:create db:migrate db:seed

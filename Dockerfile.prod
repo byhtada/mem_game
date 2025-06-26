@@ -1,47 +1,86 @@
-FROM ruby:3.3.0-slim
+# syntax = docker/dockerfile:1
 
-# Установка Node.js и системных зависимостей
-RUN apt-get update -qq && apt-get install -y \
-    curl \
-    gnupg2 \
-    build-essential \
-    libpq-dev \
-    postgresql-client \
-    && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
-    && apt-get install -y nodejs \
-    && rm -rf /var/lib/apt/lists/*
+# Make sure RUBY_VERSION matches the Ruby version in .ruby-version and Gemfile
+ARG RUBY_VERSION=3.3.0
+FROM ruby:$RUBY_VERSION-slim AS base
 
+LABEL fly_launch_runtime="rails"
+
+# Rails app lives here
 WORKDIR /app
 
-# Копирование и установка зависимостей
+# Set production environment
+ENV BUNDLE_PATH="/usr/local/bundle" \
+    RAILS_ENV="production"
+
+# Update gems and bundler
+RUN gem update --system --no-document && \
+    gem install -N bundler
+
+# Throw-away build stage to reduce size of final image
+FROM base AS build
+
+# Install packages needed to build gems and Node.js
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y \
+    build-essential \
+    libpq-dev \
+    curl \
+    gnupg2 && \
+    curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y nodejs && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install application gems
 COPY Gemfile Gemfile.lock ./
 RUN bundle config set --local deployment 'true' && \
     bundle config set --local without 'development test' && \
-    bundle install
+    bundle install && \
+    bundle exec bootsnap precompile --gemfile && \
+    rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git
 
-# Копирование фронтенда и установка npm зависимостей (включая devDependencies для сборки)
-RUN mkdir -p memgame_web
-COPY memgame_web/package*.json ./memgame_web/
-RUN cd memgame_web && npm install
-
-# Копирование приложения
+# Copy application code
 COPY . .
+RUN sed -i 's/ruby\.exe\r$/ruby/' bin/*
+RUN chmod +x bin/*
 
-# Сборка фронтенда и копирование в public
-RUN cd memgame_web && npm run build && \
-    cp -r dist/* ../public/ && \
-    cp -r assets ../public/ && \
-    cp -r libs ../public/
+# Install frontend dependencies and build
+COPY memgame_web/package*.json ./memgame_web/
+RUN cd memgame_web && npm ci
+RUN cd memgame_web && npm run build
 
-# Очистка npm cache и node_modules для уменьшения размера образа
+# Copy built frontend to public
+RUN cp -r memgame_web/dist/* public/ && \
+    cp -r memgame_web/assets public/ && \
+    cp -r memgame_web/libs public/
+
+# Clean up npm cache and remove node_modules for production
 RUN cd memgame_web && npm cache clean --force && rm -rf node_modules
 
-# Создание пользователя
-RUN groupadd -r app && useradd -r -g app app && \
-    chown -R app:app /app
+# Precompile bootsnap code for faster boot times
+RUN bundle exec bootsnap precompile app/ lib/
 
-USER app
+# Final stage for app image
+FROM base
 
+# Install packages needed for deployment
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y \
+    curl \
+    postgresql-client && \
+    rm -rf /var/lib/apt/lists /var/cache/apt/archives
+
+# Copy built artifacts: gems, application
+COPY --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
+COPY --from=build /app /app
+
+# Run and own only the runtime files as a non-root user for security
+RUN groupadd --system --gid 1000 app && \
+    useradd app --uid 1000 --gid 1000 --create-home --shell /bin/bash && \
+    chown -R 1000:1000 db log storage tmp bin && \
+    chmod +x /app/bin/*
+USER 1000:1000
+
+# Start the server by default, this can be overwritten at runtime
 EXPOSE 3000
-
 CMD ["bundle", "exec", "rails", "server", "-b", "0.0.0.0"] 

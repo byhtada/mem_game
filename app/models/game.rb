@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
 class Game < ApplicationRecord
-  ROUNDS = 3
+  ROUNDS = 1
   READY_TO_START_DURATION = 10
-  READY_TO_RESTART_DURATION = 15
+  READY_TO_RESTART_DURATION = 10
 
-  has_many :rounds
-  has_many :game_users
+  has_many :rounds, dependent: :destroy
+  has_many :game_users, dependent: :destroy
 
   enum state: {
     registration: 'registration',
@@ -61,6 +61,11 @@ class Game < ApplicationRecord
   end
 
   def start_game
+    if self.game_users.where(bot: true).count == self.participants
+      self.destroy
+      return
+    end
+
     self.game_users.order(created_at: :asc).each_with_index do |user, i|
       user.update(game_user_number: i)
     end
@@ -127,6 +132,8 @@ class Game < ApplicationRecord
         BotRestartJob.set(wait: delay.seconds).perform_later(self.id, game_user.id)
       end
     end
+
+    GameRestartJob.set(wait: READY_TO_RESTART_DURATION).perform_later(self.id)
   end
 
   def self.get_uniq_id
@@ -177,30 +184,33 @@ class Game < ApplicationRecord
   end
 
   def build_restart_update_data
-    restart_progress_wait = self.restart_progress_wait
     new_game = nil
 
+    ids_ready_to_restart = self.users.select {|u| u.ready_to_restart}.pluck(:user_id)
+
     # Логика рестарта (из контроллера)
-    if restart_progress_wait.negative? || users.select {|u| u.ready_to_restart}.count == participants
-      if state != 'close'
+    if restart_progress_wait.negative? || ids_ready_to_restart.count == self.participants
+      if self.state != 'close'
         new_game = Game.create(participants: 4)
 
-        users.each do |user|
+        self.users.each do |user|
           next unless user.ready_to_restart
 
           new_game.join_to_game(User.find(user.user_id))
         end
         
-        update(state: 'close')
-        new_game.update(state: 'playing') if new_game.participants == new_game.users.count
+        self.update(state: 'close')
+        new_game.start_game if new_game.participants == new_game.users.count
       end
     end
 
     {
+      restart_progress_left: (Game::READY_TO_RESTART_DURATION - (Time.now.to_i - self.updated_at.to_i)) * 1000,
       restart_progress_wait: restart_progress_wait,
       ready_to_start: reload.state == 'close',
       users: users_for_broadcast,
       new_game: new_game&.as_json,
+      new_game_users: new_game&.users&.pluck(:user_id),
       game: self.as_json,
       winners_ids: winners.pluck(:game_user_number),
     }

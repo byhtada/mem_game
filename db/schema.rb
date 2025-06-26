@@ -41,7 +41,10 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_13_194728) do
     t.datetime "updated_at", null: false
     t.boolean "ready_to_restart", default: false
     t.boolean "bot", default: false
+    t.index ["bot"], name: "index_game_users_on_bot"
     t.index ["game_id"], name: "index_game_users_on_game_id"
+    t.index ["user_id", "game_id"], name: "index_game_users_on_user_id_and_game_id"
+    t.index ["user_id"], name: "index_game_users_on_user_id"
   end
 
   create_table "games", force: :cascade do |t|
@@ -53,6 +56,9 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_13_194728) do
     t.datetime "updated_at", null: false
     t.string "state", default: "registration"
     t.boolean "private", default: false
+    t.index ["state", "private"], name: "index_games_on_state_and_private"
+    t.index ["state"], name: "index_games_on_state"
+    t.index ["uniq_id", "state", "private"], name: "index_games_on_uniq_id_and_state_and_private"
   end
 
   create_table "mems", force: :cascade do |t|
@@ -95,7 +101,9 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_13_194728) do
     t.datetime "updated_at", null: false
     t.string "state", default: "play"
     t.index ["game_id", "round_num"], name: "index_rounds_on_game_id_and_round_num", unique: true
+    t.index ["game_id", "state"], name: "index_rounds_on_game_id_and_state"
     t.index ["game_id"], name: "index_rounds_on_game_id"
+    t.index ["state"], name: "index_rounds_on_state"
   end
 
   create_table "tournament_users", force: :cascade do |t|
@@ -103,6 +111,9 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_13_194728) do
     t.integer "tournament_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["tournament_id"], name: "index_tournament_users_on_tournament_id"
+    t.index ["user_id", "tournament_id"], name: "index_tournament_users_on_user_id_and_tournament_id"
+    t.index ["user_id"], name: "index_tournament_users_on_user_id"
   end
 
   create_table "tournaments", force: :cascade do |t|
@@ -110,6 +121,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_13_194728) do
     t.boolean "active"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["active"], name: "index_tournaments_on_active"
+    t.index ["start"], name: "index_tournaments_on_start"
   end
 
   create_table "user_friends", force: :cascade do |t|
@@ -117,6 +130,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_13_194728) do
     t.integer "friend_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["friend_id"], name: "index_user_friends_on_friend_id"
+    t.index ["user_id", "friend_id"], name: "index_user_friends_on_user_id_and_friend_id"
     t.index ["user_id"], name: "index_user_friends_on_user_id"
   end
 
@@ -135,7 +150,10 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_13_194728) do
     t.string "source_channel"
     t.string "source_id"
     t.boolean "bot", default: false
+    t.index ["auth_token"], name: "index_users_on_auth_token"
+    t.index ["bot"], name: "index_users_on_bot"
     t.index ["source_channel"], name: "index_users_on_source_channel"
+    t.index ["tg_id"], name: "index_users_on_tg_id"
   end
 
 end

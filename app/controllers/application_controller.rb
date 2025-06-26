@@ -147,7 +147,7 @@ https://t.me/mem_culture_bot?start=in_#{@user.tg_id}"
         timestamp: Time.current.iso8601,
         version: Rails.application.class.module_parent_name,
         database: database_status,
-        redis: redis_status
+        delayed_job: delayed_job_status
       }
     end
 
@@ -218,8 +218,8 @@ https://t.me/mem_culture_bot?start=in_#{@user.tg_id}"
       'disconnected'
     end
 
-    def redis_status
-      Sidekiq.redis(&:ping)
+    def delayed_job_status
+      Delayed::Job.connection.execute('SELECT 1')
       'connected'
     rescue StandardError
       'disconnected'

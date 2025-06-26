@@ -14,11 +14,6 @@ class Round < ApplicationRecord
 
   validates :round_num, uniqueness: { scope: :game_id }
 
-  # Callbacks для автоматического broadcasting
-  # after_update :broadcast_round_update_on_state_change
-  # after_update :broadcast_round_update_on_mem_added
-  # after_update :broadcast_vote_update_on_vote_change
-
   def round_progress_wait
     100 - (100 * (Time.now.to_i - self.created_at.to_i).to_f / ROUND_DURATION).to_i
   end
@@ -48,6 +43,19 @@ class Round < ApplicationRecord
   end
 
   def finish_voting
+    self.update(state: 'close')
+    CalculateRoundResultService.new(self.game).call
+
+    if self.round_num >= Game::ROUNDS
+      self.game.finish_game
+    else
+      self.game.create_round
+    end
+
+    self.broadcast_vote_update
+  end
+
+  def try_finish_voting
     users = self.game.game_users
 
     mems, total_votes = get_round_votes_for_broadcast(users)
@@ -55,14 +63,15 @@ class Round < ApplicationRecord
     finish_round = total_votes >= self.game.participants
 
     if finish_round && self.state == 'vote'
-      self.update(state: 'close')
-      CalculateRoundResultService.new(self.game).call
+      finish_voting
+    end
+  end
 
-      if self.round_num >= Game::ROUNDS
-        self.game.finish_game
-      else
-        self.game.create_round
-      end
+  def try_finish_round
+    mems, total_votes = get_round_votes_for_broadcast(self.game.users)
+
+    if mems.count == self.game.participants
+      self.update(state: 'vote')
     end
   end
 
@@ -73,6 +82,7 @@ class Round < ApplicationRecord
     return unless state == 'play' && self.game.state == 'playing'
     
     Rails.logger.info "🎮 [Round#broadcast_round_update] Broadcasting round update for game #{game_id}"
+    try_finish_round
     RoundChannel.broadcast_to(self.game, build_round_update_data)
     Rails.logger.info "🎮 [Round#broadcast_round_update] Broadcast completed for round #{id}"
   end
@@ -83,7 +93,7 @@ class Round < ApplicationRecord
     return unless state == 'vote' && self.game.state == 'playing'
     
     Rails.logger.info "🎮 [Round#broadcast_vote_update] Broadcasting vote update for game #{game_id}"
-    finish_voting
+    try_finish_voting
     VoteChannel.broadcast_to(self.game, build_vote_update_data)
     
     Rails.logger.info "🎮 [Round#broadcast_vote_update] Broadcast completed for round #{id}"
@@ -158,32 +168,6 @@ class Round < ApplicationRecord
     end
 
     mems.sort { |f, s| f[:time] <=> s[:time] }
-  end
-
-  def broadcast_round_update_on_state_change
-    # Отправляем обновление при изменении состояния раунда
-    if saved_change_to_state?
-      Rails.logger.info "🎮 [Round#broadcast_round_update_on_state_change] State changed from #{saved_change_to_state.first} to #{saved_change_to_state.last}"
-      broadcast_round_update
-    end
-  end
-
-  def broadcast_round_update_on_mem_added
-    # Отправляем обновление при добавлении мема
-    mem_fields_changed = (0..4).any? { |i| saved_change_to_attribute?("mem_#{i}_name") }
-    if mem_fields_changed
-      Rails.logger.info "🎮 [Round#broadcast_round_update_on_mem_added] New mem added to round #{id}"
-      broadcast_round_update
-    end
-  end
-
-  def broadcast_vote_update_on_vote_change
-    # Отправляем обновление при изменении голосов
-    vote_fields_changed = (0..4).any? { |i| saved_change_to_attribute?("mem_#{i}_votes") }
-    if vote_fields_changed
-      Rails.logger.info "🎮 [Round#broadcast_vote_update_on_vote_change] Vote added to round #{id}"
-      broadcast_vote_update
-    end
   end
 
   def get_round_votes_for_broadcast(users)

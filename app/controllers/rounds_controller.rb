@@ -13,7 +13,8 @@ class RoundsController < ApplicationController
   def start_voting
     round = Round.find(params[:round_id])
     if round.start_voting == 0
-      round.update(start_voting: Time.now.to_i, state: 'vote') 
+      round.update(start_voting: Time.now.to_i, state: 'vote')
+      FinishVotingJob.set(wait: ::Round::VOTE_DURATION).perform_later(round.id)
       
       round.game.game_users.where(bot: true).each do |user|
         min = ::Round::VOTE_DURATION * 0.1

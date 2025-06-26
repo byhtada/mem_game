@@ -1,138 +1,113 @@
-# ⚡ Быстрое развертывание MemGame
+# Быстрое развертывание обновленной версии
 
-## 🚀 Для нового сервера (первый раз)
+## 🚀 Автоматическое развертывание (рекомендуется)
 
 ```bash
-# 1. Подготовка сервера
-sudo apt update && sudo apt upgrade -y
-curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh
-sudo usermod -aG docker $USER && exit
-# Перелогиньтесь на сервер
-
-# 2. Установка Docker Compose
-sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-sudo chmod +x /usr/local/bin/docker-compose
-
-# 3. Клонирование проекта
-cd /opt
-sudo git clone YOUR_REPO_URL memgame
-sudo chown -R $USER:$USER /opt/memgame
+# Перейти в директорию проекта
 cd /opt/memgame
 
-# 4. Настройка окружения
-cp env.production.example .env
-nano .env  # Заполните переменные!
-
-# 5. SSL сертификаты
-# Вариант A: У вас уже есть teremok_space.crt и teremok_space.key
-make ssl-teremok
-
-# Вариант B: Другие пользовательские сертификаты  
-make ssl-install CERT_FILE=/path/to/your/cert.crt KEY_FILE=/path/to/your/key.key
-
-# Вариант C: Самоподписанные (для теста)
-mkdir -p ssl
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-  -keyout ssl/key.pem -out ssl/cert.pem \
-  -subj "/C=RU/ST=Moscow/L=Moscow/O=MemGame/CN=yourdomain.com"
-
-# 6. Развертывание
-make deploy
+# Запустить автоматическое развертывание
+./scripts/deploy.sh
 ```
 
-## 🔄 Обновление (уже работающий сервер)
+## 🔧 Ручное развертывание
 
+### 1. Подготовка
 ```bash
 cd /opt/memgame
-git pull origin main
-make prod-build
-make prod-up
+git pull origin master
 ```
 
-## ⚙️ Основные команды
+### 2. Обновление с новой Docker структурой
+```bash
+# Остановка сервисов
+docker-compose -f docker-compose.prod.yml down
+
+# ВАЖНО: Пересборка с --no-cache для применения новой структуры Dockerfile
+docker-compose -f docker-compose.prod.yml build --no-cache
+
+# Запуск базы данных и выполнение миграций
+docker-compose -f docker-compose.prod.yml up -d db
+sleep 30  # Ждем готовности базы данных
+docker-compose -f docker-compose.prod.yml run --rm web bundle exec rails db:migrate
+
+# Запуск всех сервисов
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+### 3. Проверка
+```bash
+# Статус контейнеров
+docker-compose -f docker-compose.prod.yml ps
+
+# Логи приложения
+docker-compose -f docker-compose.prod.yml logs -f web
+
+# Проверка доступности
+curl -f http://localhost:3000/health
+```
+
+## ⚡ Что изменилось в этой версии
+
+- **Обновлена Docker структура** - теперь используется многоэтапная сборка
+- **Улучшена безопасность** - приложение работает под non-root пользователем
+- **Оптимизирован размер образов** - промежуточные файлы не попадают в финальный образ
+- **Ускорен запуск** - предкомпилированный bootsnap
+- **Удален Redis** - упрощена архитектура, используется только PostgreSQL
+- **Sidekiq → Delayed Job** - более стабильная обработка фоновых задач
+
+## 🔍 Мониторинг после обновления
 
 ```bash
-# Статус сервисов
-make prod-status
+# Размер образов (должен уменьшиться)
+docker images | grep memgame
 
-# Логи
-make prod-logs
+# Использование ресурсов
+docker stats
 
-# Backup базы данных
-make prod-backup
-
-# Консоль Rails
-make prod-console
-
-# Перезапуск
-make prod-down && make prod-up
-
-# Мониторинг
-make monitor
+# Логи в реальном времени
+docker-compose -f docker-compose.prod.yml logs -f
 ```
 
-## 🛑 Аварийное восстановление
+## 🚨 Если что-то пошло не так
+
+### Быстрый откат
+```bash
+# Откат изменений Docker
+git checkout HEAD~1 -- Dockerfile.prod docker-compose.prod.yml
+
+# Пересборка с предыдущей версией
+docker-compose -f docker-compose.prod.yml build --no-cache
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+### Восстановление из backup
+```bash
+# Если был создан backup
+./scripts/backup.sh restore latest
+```
+
+## 📊 Health Check
+
+После развертывания приложение должно отвечать на:
+- `GET /health` - статус приложения
+- `GET /` - главная страница
+
+## 💡 Полезные команды
 
 ```bash
-# Остановить все
-make prod-down
+# Просмотр логов конкретного сервиса
+docker-compose -f docker-compose.prod.yml logs web
+docker-compose -f docker-compose.prod.yml logs delayed_job
 
-# Восстановить из backup
-make prod-restore BACKUP_FILE=backups/backup_YYYYMMDD_HHMMSS.sql.gz
+# Выполнение команд в контейнере
+docker-compose -f docker-compose.prod.yml exec web bash
+docker-compose -f docker-compose.prod.yml exec web bundle exec rails console
 
-# Запустить заново
-make prod-up
-```
+# Проверка статуса задач Delayed Job
+docker-compose -f docker-compose.prod.yml exec web bundle exec rails runner "puts Delayed::Job.count"
 
-## 📝 Переменные .env (обязательные)
-
-```bash
-# Сгенерируйте безопасные значения:
-DB_PASSWORD=$(openssl rand -base64 32)
-RAILS_MASTER_KEY=$(openssl rand -hex 64)  
-SECRET_KEY_BASE=$(openssl rand -hex 64)
-
-# Укажите ваш домен:
-DOMAIN=yourdomain.com
-LETSENCRYPT_EMAIL=your@email.com
-```
-
-## 🔒 SSL сертификаты
-
-### Let's Encrypt (автоматические)
-```bash
-# Получить реальные SSL сертификаты
-make ssl-cert DOMAIN=yourdomain.com LETSENCRYPT_EMAIL=your@email.com
-
-# Обновить сертификаты
-make ssl-renew
-```
-
-### Пользовательские сертификаты
-```bash
-# Быстрая установка Teremok сертификатов (если файлы уже в ssl/)
-make ssl-teremok
-
-# Установить другие сертификаты
-make ssl-install CERT_FILE=/path/to/cert.crt KEY_FILE=/path/to/key.key
-
-# Проверить сертификаты
-make ssl-check
-
-# Обновить сертификаты Teremok
-make ssl-update CERT_FILE=ssl/teremok_space.crt KEY_FILE=ssl/teremok_space.key
-```
-
-## 🎯 Проверка работы
-
-- Health check: `curl https://yourdomain.com/health`
-- Основной сайт: `https://yourdomain.com`
-- Логи в реальном времени: `make prod-logs`
-
-## ☎️ Поддержка
-
-При проблемах:
-1. Проверьте логи: `make prod-logs`
-2. Статус контейнеров: `make prod-status`
-3. Проверьте конфигурацию: `cat .env`
-4. Перезапустите: `make prod-down && make prod-up` 
+# Перезапуск конкретного сервиса
+docker-compose -f docker-compose.prod.yml restart web
+docker-compose -f docker-compose.prod.yml restart delayed_job
+``` 
