@@ -1,4 +1,4 @@
-class AddPerformanceIndexes < ActiveRecord::Migration[7.1]
+class AddNewIndexes < ActiveRecord::Migration[7.1]
   def change
     # Индексы для таблицы games
     add_index :games, :state, if_not_exists: true
