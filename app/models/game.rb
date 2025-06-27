@@ -31,9 +31,7 @@ class Game < ApplicationRecord
     BotJoinGameJob.set(wait: (READY_TO_START_DURATION * 0.8).seconds).perform_later(self.id)
   end
 
-  def join_to_game(user)
-    Rails.logger.info "🎮 [Game#join_to_game] User #{user.id} (#{user.name}) joining game #{id}"
-    
+  def join_to_game(user)    
     return false if user.energy - 5 < 0
     user.update(energy: user.energy - 5)
 
@@ -45,15 +43,9 @@ class Game < ApplicationRecord
       game_id:    self.id,
       mem_names:  MemForGameService.call)
 
-    Rails.logger.info "🎮 [Game#join_to_game] Created GameUser #{game_user.id} for user #{user.id}"
-    Rails.logger.info "🎮 [Game#join_to_game] Game #{id} now has #{game_users.count}/#{participants} players"
-
-    # Отправляем обновление всем подписчикам после добавления игрока
-
     broadcast_game_update
 
     if self.game_users.count == self.participants
-      Rails.logger.info "🎮 [Game#join_to_game] Game #{id} is full, starting game!"
       self.start_game
     end
 
@@ -61,17 +53,25 @@ class Game < ApplicationRecord
   end
 
   def start_game
-    if self.game_users.where(bot: true).count == self.participants
-      self.destroy
-      return
-    end
+    # Атомарная проверка и обновление состояния для избежания двойного вызова
+    Game.transaction do
+      self.reload
+      # Проверяем, что игра все еще в состоянии регистрации
+      return unless self.state == 'registration'
+      
+      if self.game_users.where(bot: true).count == self.participants
+        self.destroy
+        return
+      end
 
-    self.game_users.order(created_at: :asc).each_with_index do |user, i|
-      user.update(game_user_number: i)
-    end
+      self.game_users.order(created_at: :asc).each_with_index do |user, i|
+        user.update(game_user_number: i)
+      end
 
-    self.update(state: 'playing')
-    self.create_round
+      # Сразу меняем состояние, чтобы заблокировать повторные вызовы
+      self.update!(state: 'playing')
+      self.create_round
+    end
   end
 
   def ready_to_start
