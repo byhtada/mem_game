@@ -40,6 +40,12 @@ help:
 	@echo "  ssl-update     - Обновить SSL сертификаты"
 	@echo "  deploy         - Полное развертывание в продакшен"
 	@echo "  deploy-quick   - Быстрое обновление с версионностью"
+	@echo "  prod-build-web - Быстрая пересборка только web-сервиса"
+	@echo "  prod-build-web-cache - Пересборка web-сервиса с кэшем (быстрее)"
+	@echo "  prod-restart-web - Рестарт только web-сервиса"
+	@echo "  prod-update-web - Быстрое обновление web-сервиса (пересборка + рестарт)"
+	@echo "  deploy-web - Быстрый деплой только web-сервиса без кэша"
+	@echo "  deploy-web-fast - Быстрый деплой web-сервиса с кэшем"
 
 # Development команды
 build:
@@ -117,10 +123,56 @@ bump-css-local:
 prod-build:
 	$(DOCKER_COMPOSE_PROD) build --no-cache
 
+# Быстрая пересборка только web-сервиса
+prod-build-web:
+	@echo "🔧 Пересборка только web-сервиса..."
+	$(DOCKER_COMPOSE_PROD) build --no-cache web
+	@echo "✅ Web-сервис пересобран"
+
+# Пересборка web-сервиса с кэшем (быстрее)
+prod-build-web-cache:
+	@echo "🔧 Быстрая пересборка web-сервиса (с кэшем)..."
+	$(DOCKER_COMPOSE_PROD) build web
+	@echo "✅ Web-сервис пересобран с кэшем"
+
 prod-up:
 	$(DOCKER_COMPOSE_PROD) up -d
 	@echo "Production приложение запущено"
 	@echo "Проверьте статус: make prod-status"
+
+# Рестарт только web-сервиса
+prod-restart-web:
+	@echo "🔄 Рестарт web-сервиса..."
+	$(DOCKER_COMPOSE_PROD) restart web
+	@echo "✅ Web-сервис перезапущен"
+
+# Быстрое обновление web-сервиса (пересборка + рестарт)
+prod-update-web:
+	@echo "🚀 Быстрое обновление web-сервиса..."
+	$(DOCKER_COMPOSE_PROD) build web
+	$(DOCKER_COMPOSE_PROD) up -d web
+	@echo "✅ Web-сервис обновлен"
+
+# Быстрый деплой только web-сервиса без кэша
+deploy-web:
+	@echo "🚀 Быстрый деплой web-сервиса..."
+	$(DOCKER_COMPOSE_PROD) build --no-cache web
+	$(DOCKER_COMPOSE_PROD) stop web
+	$(DOCKER_COMPOSE_PROD) up -d web
+	@echo "⏳ Ожидание готовности web-сервиса..."
+	@sleep 15
+	@if $(DOCKER_COMPOSE_PROD) exec -T web curl -f http://localhost:3000/health >/dev/null 2>&1; then \
+		echo "✅ Web-сервис готов к работе!"; \
+	else \
+		echo "❌ Web-сервис не отвечает на health check"; \
+	fi
+
+# Быстрый деплой web-сервиса с кэшем
+deploy-web-fast:
+	@echo "⚡ Сверхбыстрый деплой web-сервиса..."
+	$(DOCKER_COMPOSE_PROD) build web
+	$(DOCKER_COMPOSE_PROD) up -d web
+	@echo "✅ Web-сервис обновлен (с кэшем)"
 
 prod-down:
 	$(DOCKER_COMPOSE_PROD) down

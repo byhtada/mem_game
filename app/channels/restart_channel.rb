@@ -50,7 +50,7 @@ class RestartChannel < ApplicationCable::Channel
       ready_to_start: game.reload.state == 'close',
       users: users,
       new_game: new_game&.as_json,
-      new_game_users: new_game&.users.pluck(:user_id),
+      new_game_users: new_game&.users&.pluck(:user_id),
       game: game.as_json,
       user_id: current_user.id,
       winners_ids: game.winners.pluck(:game_user_number),
