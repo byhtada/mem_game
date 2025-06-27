@@ -44,13 +44,10 @@ class Game < ApplicationRecord
     broadcast_game_update
 
     # Атомарная проверка количества участников для избежания множественного вызова start_game
-    Game.transaction do
-      self.reload
-      if self.game_users.count == self.participants && self.state == 'registration'
-        Rails.logger.info "🎮 [Game#create_round] Start game from join_to_game #{self.id}"
+    if self.game_users.count == self.participants && self.state == 'registration'
+      Rails.logger.info "🎮 [Game#create_round] Start game from join_to_game #{self.id}"
 
-        self.start_game
-      end
+      self.start_game
     end
 
     true
@@ -58,7 +55,6 @@ class Game < ApplicationRecord
 
   def start_game
     # Атомарная проверка и обновление состояния для избежания двойного вызова
-    Game.transaction do
       self.reload
       # СНАЧАЛА проверяем состояние
       return unless self.state == 'registration'
@@ -77,7 +73,6 @@ class Game < ApplicationRecord
       # ПОТОМ меняем состояние
       self.update!(state: 'playing')
       self.create_round
-    end
   end
 
   def ready_to_start
@@ -96,14 +91,12 @@ class Game < ApplicationRecord
     existing_round = Round.find_by(game_id: self.id, round_num: new_round)
     return existing_round if existing_round.present?
 
-    return if Time.now.to_i - self.rounds.last.created_at.to_i < 2
-
     self.update(current_round: new_round)
     round = Round.create!(game_id: self.id,
                          question_text: Question.pluck(:text).sample(1)[0],
                          round_num: new_round)
 
-    Rails.logger.info "🎮 [Game#create_round] Round created #{new_round.id} #{new_round.round_num}"
+    Rails.logger.info "🎮 [Game#create_round] Round created #{round.id} #{round.round_num}"
 
     self.game_users.where(bot: true).each do |game_user|
       min = ::Round::ROUND_DURATION * 0.2
@@ -202,22 +195,20 @@ class Game < ApplicationRecord
     # Логика рестарта (из контроллера)
     if restart_progress_wait.negative? || ids_ready_to_restart.count == self.participants
       # Атомарная проверка и обновление состояния для избежания race condition
-      Game.transaction do
-        self.reload
-        if self.state != 'close'
-          # Сразу помечаем игру как закрытую, чтобы другие потоки не создавали новую игру
-          self.update!(state: 'close')
-          
-          new_game = Game.create(participants: 4)
+      self.reload
+      if self.state != 'close'
+        # Сразу помечаем игру как закрытую, чтобы другие потоки не создавали новую игру
+        self.update!(state: 'close')
+        
+        new_game = Game.create(participants: 4)
 
-          self.users.each do |user|
-            next unless user.ready_to_restart
+        self.users.each do |user|
+          next unless user.ready_to_restart
 
-            new_game.join_to_game(User.find(user.user_id))
-          end
-
-          new_game.add_bot
+          new_game.join_to_game(User.find(user.user_id))
         end
+
+        new_game.add_bot
       end
     end
 

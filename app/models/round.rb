@@ -44,11 +44,31 @@ class Round < ApplicationRecord
 
   def finish_voting
     # Атомарная проверка и завершение голосования для избежания дублирования
-    Round.transaction do
-      self.reload
-      # Проверяем, что голосование еще не завершено
-      return if self.state == 'close'
-      
+    self.reload
+    # Проверяем, что голосование еще не завершено
+    return if self.state == 'close'
+    
+    self.update!(state: 'close')
+    CalculateRoundResultService.new(self.game).call
+
+    if self.round_num >= Game::ROUNDS
+      self.game.finish_game
+    else
+      self.game.create_round
+    end
+
+    self.broadcast_vote_update
+  end
+
+  def try_finish_voting
+    # Атомарная проверка и завершение голосования
+    self.reload
+    users = self.game.game_users
+    mems, total_votes = get_round_votes_for_broadcast(users)
+    finish_round = total_votes >= self.game.participants
+
+    if finish_round && self.state == 'vote'
+      # Вся логика завершения в одной транзакции
       self.update!(state: 'close')
       CalculateRoundResultService.new(self.game).call
 
@@ -57,48 +77,19 @@ class Round < ApplicationRecord
       else
         self.game.create_round
       end
+      
+      # Broadcast происходит после завершения транзакции
+      return true
     end
-
-    self.broadcast_vote_update
-  end
-
-  def try_finish_voting
-    # Атомарная проверка и завершение голосования
-    Round.transaction do
-      self.reload
-      users = self.game.game_users
-      mems, total_votes = get_round_votes_for_broadcast(users)
-      finish_round = total_votes >= self.game.participants
-
-      if finish_round && self.state == 'vote'
-        # Вся логика завершения в одной транзакции
-        self.update!(state: 'close')
-        CalculateRoundResultService.new(self.game).call
-
-        if self.round_num >= Game::ROUNDS
-          self.game.finish_game
-        else
-          self.game.create_round
-        end
-        
-        # Broadcast происходит после завершения транзакции
-        return true
-      end
-    end
-    
-    false
   end
 
   def try_finish_round
-    # Атомарная проверка и переход к голосованию
-    Round.transaction do
-      self.reload
+    self.reload
       mems, total_votes = get_round_votes_for_broadcast(self.game.users)
 
       if mems.count == self.game.participants && self.state == 'play'
         self.update!(state: 'vote')
       end
-    end
   end
 
   # Методы для веб-сокет broadcasting
