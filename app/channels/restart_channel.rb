@@ -44,27 +44,6 @@ class RestartChannel < ApplicationCable::Channel
     restart_progress_wait = game.restart_progress_wait
     new_game = nil
 
-    ids_ready_to_restart = game.users.select {|u| u.ready_to_restart}.pluck(:user_id)
-
-    # Логика рестарта (из контроллера)
-    if restart_progress_wait.negative? || ids_ready_to_restart.count == game.participants
-      if game.state != 'close'
-        new_game = Game.create(participants: 4)
-
-        game.users.each do |user|
-          next unless user.ready_to_restart
-
-          new_game.join_to_game(User.find(user.user_id))
-        end
-        
-        game.update(state: 'close')
-        new_game.start_game if new_game.participants == new_game.users.count
-      end
-    end
-
-    # Найти новую игру для пользователя
-    new_game = Game.find(GameUser.where(user_id: current_user.id).last.game_id) if new_game.nil?
-
     data = {
       restart_progress_wait: restart_progress_wait,
       restart_progress_left: (Game::READY_TO_RESTART_DURATION - (Time.now.to_i - game.updated_at.to_i)) * 1000,

@@ -96,7 +96,6 @@ class Game < ApplicationRecord
       max = ::Round::ROUND_DURATION * 0.5
       delay = rand(min..max)
 
-      Rails.logger.info "🎮 [Game#create_round] BotRoundJob delay: #{delay.seconds} seconds"
       BotRoundJob.set(wait: delay.seconds).perform_later(round.id, game_user.id)
     end
 
@@ -161,14 +160,10 @@ class Game < ApplicationRecord
   end
 
   def broadcast_restart_update
-    # Отправляем обновления для игр в состоянии finishing (после завершения игры)
-    Rails.logger.info "🔄 [Game#broadcast_restart_update] Game #{id} state: #{state}"
     return unless state == 'finishing'
     
     data = build_restart_update_data
-    Rails.logger.info "🔄 [Game#broadcast_restart_update] Broadcasting restart to Game #{id}: #{data.inspect}"
     RestartChannel.broadcast_to(self, data)
-    Rails.logger.info "🔄 [Game#broadcast_restart_update] Restart broadcast completed for Game #{id}"
   end
 
   private
@@ -188,6 +183,7 @@ class Game < ApplicationRecord
 
     ids_ready_to_restart = self.users.select {|u| u.ready_to_restart}.pluck(:user_id)
 
+
     # Логика рестарта (из контроллера)
     if restart_progress_wait.negative? || ids_ready_to_restart.count == self.participants
       if self.state != 'close'
@@ -200,7 +196,6 @@ class Game < ApplicationRecord
         end
         
         self.update(state: 'close')
-        new_game.start_game if new_game.participants == new_game.users.count
       end
     end
 
