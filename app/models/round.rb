@@ -43,35 +43,61 @@ class Round < ApplicationRecord
   end
 
   def finish_voting
-    self.update(state: 'close')
-    CalculateRoundResultService.new(self.game).call
+    # Атомарная проверка и завершение голосования для избежания дублирования
+    Round.transaction do
+      self.reload
+      # Проверяем, что голосование еще не завершено
+      return if self.state == 'close'
+      
+      self.update!(state: 'close')
+      CalculateRoundResultService.new(self.game).call
 
-    if self.round_num >= Game::ROUNDS
-      self.game.finish_game
-    else
-      self.game.create_round
+      if self.round_num >= Game::ROUNDS
+        self.game.finish_game
+      else
+        self.game.create_round
+      end
     end
 
     self.broadcast_vote_update
   end
 
   def try_finish_voting
-    users = self.game.game_users
+    # Атомарная проверка и завершение голосования
+    Round.transaction do
+      self.reload
+      users = self.game.game_users
+      mems, total_votes = get_round_votes_for_broadcast(users)
+      finish_round = total_votes >= self.game.participants
 
-    mems, total_votes = get_round_votes_for_broadcast(users)
+      if finish_round && self.state == 'vote'
+        # Вся логика завершения в одной транзакции
+        self.update!(state: 'close')
+        CalculateRoundResultService.new(self.game).call
 
-    finish_round = total_votes >= self.game.participants
-
-    if finish_round && self.state == 'vote'
-      finish_voting
+        if self.round_num >= Game::ROUNDS
+          self.game.finish_game
+        else
+          self.game.create_round
+        end
+        
+        # Broadcast происходит после завершения транзакции
+        return true
+      end
     end
+    
+    false
   end
 
   def try_finish_round
-    mems, total_votes = get_round_votes_for_broadcast(self.game.users)
+    # Атомарная проверка и переход к голосованию
+    Round.transaction do
+      self.reload
+      mems, total_votes = get_round_votes_for_broadcast(self.game.users)
 
-    if mems.count == self.game.participants
-      self.update(state: 'vote')
+      if mems.count == self.game.participants && self.state == 'play'
+        self.update!(state: 'vote')
+      end
     end
   end
 
@@ -93,8 +119,15 @@ class Round < ApplicationRecord
     return unless state == 'vote' && self.game.state == 'playing'
     
     Rails.logger.info "🎮 [Round#broadcast_vote_update] Broadcasting vote update for game #{game_id}"
-    try_finish_voting
-    VoteChannel.broadcast_to(self.game, build_vote_update_data)
+    
+    # Пытаемся завершить голосование, если это произошло - отправляем финальный broadcast
+    if try_finish_voting
+      Rails.logger.info "🎮 [Round#broadcast_vote_update] Voting finished, sending final broadcast"
+      VoteChannel.broadcast_to(self.game, build_vote_update_data)
+    else
+      # Обычный broadcast во время голосования
+      VoteChannel.broadcast_to(self.game, build_vote_update_data)
+    end
     
     Rails.logger.info "🎮 [Round#broadcast_vote_update] Broadcast completed for round #{id}"
   end
