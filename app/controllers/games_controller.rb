@@ -4,7 +4,7 @@ class GamesController < ApplicationController
 
         if game.nil?
             game = Game.create(participants: 4)
-           # game = Game.create(participants: 4)
+            game.add_bot
         end
 
         if game.join_to_game(@user)

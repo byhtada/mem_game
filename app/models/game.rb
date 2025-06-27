@@ -15,8 +15,6 @@ class Game < ApplicationRecord
     close: 'close'
   }
 
-  after_create :add_bot
-
   def ready_progress_wait
     100 - (100 * (Time.now.to_i - self.updated_at.to_i).to_f / READY_TO_START_DURATION).to_i
   end
@@ -209,6 +207,8 @@ class Game < ApplicationRecord
 
             new_game.join_to_game(User.find(user.user_id))
           end
+
+          new_game.add_bot
         end
       end
     end
