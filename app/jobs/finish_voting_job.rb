@@ -6,7 +6,5 @@ class FinishVotingJob < ApplicationJob
     vote_update[:vote_finish] = true
 
     VoteChannel.broadcast_to(round.game, vote_update)
-
-    round.finish_voting
   end
 end
