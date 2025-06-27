@@ -45,8 +45,12 @@ class Game < ApplicationRecord
 
     broadcast_game_update
 
-    if self.game_users.count == self.participants
-      self.start_game
+    # Атомарная проверка количества участников для избежания множественного вызова start_game
+    Game.transaction do
+      self.reload
+      if self.game_users.count == self.participants && self.state == 'registration'
+        self.start_game
+      end
     end
 
     true
@@ -56,7 +60,7 @@ class Game < ApplicationRecord
     # Атомарная проверка и обновление состояния для избежания двойного вызова
     Game.transaction do
       self.reload
-      # Проверяем, что игра все еще в состоянии регистрации
+      # СНАЧАЛА проверяем состояние
       return unless self.state == 'registration'
       
       if self.game_users.where(bot: true).count == self.participants
@@ -68,7 +72,7 @@ class Game < ApplicationRecord
         user.update(game_user_number: i)
       end
 
-      # Сразу меняем состояние, чтобы заблокировать повторные вызовы
+      # ПОТОМ меняем состояние
       self.update!(state: 'playing')
       self.create_round
     end
@@ -86,8 +90,12 @@ class Game < ApplicationRecord
   def create_round
     new_round = self.current_round + 1
 
+    # Проверяем, что раунд с таким номером еще не создан (защита от дублирования)
+    existing_round = Round.find_by(game_id: self.id, round_num: new_round)
+    return existing_round if existing_round.present?
+
     self.update(current_round: new_round)
-    round = Round.create(game_id: self.id,
+    round = Round.create!(game_id: self.id,
                          question_text: Question.pluck(:text).sample(1)[0],
                          round_num: new_round)
 
@@ -100,6 +108,8 @@ class Game < ApplicationRecord
     end
 
     RoundClearJob.set(wait: ::Round::ROUND_DURATION).perform_later(self.id, self.current_round)
+    
+    round
   end
 
   def winners
@@ -183,19 +193,23 @@ class Game < ApplicationRecord
 
     ids_ready_to_restart = self.users.select {|u| u.ready_to_restart}.pluck(:user_id)
 
-
     # Логика рестарта (из контроллера)
     if restart_progress_wait.negative? || ids_ready_to_restart.count == self.participants
-      if self.state != 'close'
-        new_game = Game.create(participants: 4)
+      # Атомарная проверка и обновление состояния для избежания race condition
+      Game.transaction do
+        self.reload
+        if self.state != 'close'
+          # Сразу помечаем игру как закрытую, чтобы другие потоки не создавали новую игру
+          self.update!(state: 'close')
+          
+          new_game = Game.create(participants: 4)
 
-        self.users.each do |user|
-          next unless user.ready_to_restart
+          self.users.each do |user|
+            next unless user.ready_to_restart
 
-          new_game.join_to_game(User.find(user.user_id))
+            new_game.join_to_game(User.find(user.user_id))
+          end
         end
-        
-        self.update(state: 'close')
       end
     end
 
