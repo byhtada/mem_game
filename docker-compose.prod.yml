@@ -45,7 +45,7 @@ services:
       SECRET_KEY_BASE: ${SECRET_KEY_BASE}
       BUNDLE_PATH: "/usr/local/bundle"
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
-      TZ: "Europe/Moscow"
+      TZ: "UTC"
     networks:
       - frontend
       - backend
@@ -84,10 +84,7 @@ services:
       SECRET_KEY_BASE: ${SECRET_KEY_BASE}
       BUNDLE_PATH: "/usr/local/bundle"
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
-      TZ: "Europe/Moscow"
-    volumes:
-      - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
+      TZ: "UTC"
     networks:
       - backend
     restart: unless-stopped
