@@ -47,6 +47,8 @@ class Game < ApplicationRecord
     Game.transaction do
       self.reload
       if self.game_users.count == self.participants && self.state == 'registration'
+        Rails.logger.info "🎮 [Game#create_round] Start game from join_to_game #{self.id}"
+
         self.start_game
       end
     end
@@ -69,6 +71,8 @@ class Game < ApplicationRecord
       self.game_users.order(created_at: :asc).each_with_index do |user, i|
         user.update(game_user_number: i)
       end
+
+      Rails.logger.info "🎮 [Game#create_round] Start game #{self.id}"
 
       # ПОТОМ меняем состояние
       self.update!(state: 'playing')
@@ -98,6 +102,8 @@ class Game < ApplicationRecord
     round = Round.create!(game_id: self.id,
                          question_text: Question.pluck(:text).sample(1)[0],
                          round_num: new_round)
+
+    Rails.logger.info "🎮 [Game#create_round] Round created #{new_round.id} #{new_round.round_num}"
 
     self.game_users.where(bot: true).each do |game_user|
       min = ::Round::ROUND_DURATION * 0.2
