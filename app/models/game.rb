@@ -92,6 +92,8 @@ class Game < ApplicationRecord
     existing_round = Round.find_by(game_id: self.id, round_num: new_round)
     return existing_round if existing_round.present?
 
+    return if Time.now.to_i - self.rounds.last.created_at.to_i < 2
+
     self.update(current_round: new_round)
     round = Round.create!(game_id: self.id,
                          question_text: Question.pluck(:text).sample(1)[0],
