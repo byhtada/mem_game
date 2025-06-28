@@ -157,7 +157,7 @@ input {
   border-bottom-left-radius: 8px;
   border-bottom-right-radius: 8px;
   background-color: var(--container-color);
-  padding: 20px;
+  padding: 10px;
   box-shadow: 5px 5px 15px rgba(255, 127, 92, 0.624);
 }
 .div_players .div_player:first-child {
@@ -263,8 +263,8 @@ input {
 }
 
 #div_my_mems img {
-  height: 50px;
-
+  height: 45px;
+  width: 80px;
 }
 
 
@@ -273,7 +273,7 @@ input {
   display: none;
   flex-direction: column;
   align-items: center;
-  margin-top: 70px;
+  margin-top: 30px;
   margin-left: 20px;
   margin-right: 20px;
 }

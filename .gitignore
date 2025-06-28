@@ -12,7 +12,7 @@
 !/.env*.erb
 
 /ssl/*
-
+/parsing
 # Ignore all logfiles and tempfiles.
 /log/*
 /tmp/*

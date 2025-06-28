@@ -653,7 +653,7 @@ function setUsersRoundReady(users, round){
   users.forEach(user => {
     if (round[`mem_${user.game_user_number}_name`] != ""){
       const container = div_players.querySelector(`.div_player[data-id="${user.game_user_number}"]`)
-      container.querySelector('.user_name').innerText = "Готов"
+      container.querySelector('.user_points').innerText = "Готов"
     }
   })
 }
@@ -882,7 +882,13 @@ function setMyMems(my_mems){
   let html = ''
   my_mems.forEach(mem => {
     const in_active = mem.active ? "" : `<div class="mem_inactive"></div>`
-    html += `<div class="mem_card" data-name="${mem.name}" data-active="${mem.active}"><img src="assets/mem_video/${mem.name}.png"/>${in_active}</div>`
+    const link_video = `https://s3.regru.cloud/mem-assets/videos_small/${mem.name}.mp4`
+    const link_image = `https://s3.regru.cloud/mem-assets/covers_small/${mem.name}.webp`
+    html += `
+    <div class="mem_card" data-name="${mem.name}" data-link-video="${link_video}" data-active="${mem.active}">
+      <img src="${link_image}"/>
+      ${in_active}
+    </div>`
   })
 
   document.getElementById('div_my_mems').innerHTML = html
@@ -894,11 +900,10 @@ function setMyMems(my_mems){
 
 function onMemClick(){
   if (this.getAttribute("data-active") === "true") {
-    const mem_name = this.getAttribute("data-name")
     div_video.style.display = "flex"
-    my_mem_mp4.src = `assets/mem_video/${mem_name}.mp4`
+    my_mem_mp4.src = this.getAttribute("data-link-video")
     btn_send.innerText = "Отправить"
-    btn_send.setAttribute("data-mem-name", mem_name)
+    btn_send.setAttribute("data-mem-name", this.getAttribute("data-name"))
     my_mem_video.load();
     my_mem_video.play();
   }
@@ -1360,7 +1365,7 @@ function showRoundMems(){
     const container = document.getElementById(`div_video_${i}`)
     container.querySelector('.mem_sender_name').innerText = item.name
     container.querySelector('.user_avatar').src = `/assets/mem_img/svg/mem_${item.avatar}.svg`
-    container.querySelector('source').src = `assets/mem_video/${item.mem}.mp4`
+    container.querySelector('source').src = `https://s3.regru.cloud/mem-assets/videos_small/${item.mem}.mp4`
 
     //container.querySelector('.votes_count').innerText = 0
     //container.querySelector('.votes_count').setAttribute("data-user-num", item.user_num)

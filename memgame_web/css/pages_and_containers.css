@@ -24,6 +24,22 @@
 }
 
 
+.div_play_table {
+  position: absolute;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  width: calc(100% - 50px);
+  height: 500px;
+
+  border-radius: 8px;
+  border: 1px solid #555555;
+  background-image: url(../assets/table_background.jpg);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
 
 
 .container_about {

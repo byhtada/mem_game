@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 class Round < ApplicationRecord
-  ROUND_DURATION = 30
-  VOTE_DURATION = 10
+  ROUND_DURATION = 40
+  VOTE_DURATION = 20
 
   belongs_to :game
 
@@ -110,15 +110,9 @@ class Round < ApplicationRecord
     return unless state == 'vote' && self.game.state == 'playing'
     
     Rails.logger.info "🎮 [Round#broadcast_vote_update] Broadcasting vote update for game #{game_id}"
-    
-    # Пытаемся завершить голосование, если это произошло - отправляем финальный broadcast
-    if try_finish_voting
-      Rails.logger.info "🎮 [Round#broadcast_vote_update] Voting finished, sending final broadcast"
-      VoteChannel.broadcast_to(self.game, build_vote_update_data)
-    else
-      # Обычный broadcast во время голосования
-      VoteChannel.broadcast_to(self.game, build_vote_update_data)
-    end
+    try_finish_voting
+    VoteChannel.broadcast_to(self.game, build_vote_update_data)
+
     
     Rails.logger.info "🎮 [Round#broadcast_vote_update] Broadcast completed for round #{id}"
   end

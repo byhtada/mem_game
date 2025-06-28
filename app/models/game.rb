@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Game < ApplicationRecord
-  ROUNDS = 1
+  ROUNDS = 3
   READY_TO_START_DURATION = 10
   READY_TO_RESTART_DURATION = 10
 

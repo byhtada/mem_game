@@ -28,7 +28,8 @@ gem 'russian'
 gem 'delayed_job_active_record'
 gem 'daemons'
 gem 'dotenv-rails'
-
+gem 'faker'
+gem 'roo'
 
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
 # gem "jbuilder"
