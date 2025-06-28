@@ -197,12 +197,13 @@ https://t.me/mem_culture_bot?start=in_#{@user.tg_id}"
 
       if check_signature(data)
         user_data = URI.decode_www_form(data).to_h['user']
+        puts "USER_DATA #{user_data}"
         user_tg_id = JSON.parse(CGI.unescape(user_data))["id"]
 
         @user = User.find_by(tg_id: user_tg_id)
 
         unless @user.present?
-          render json: { error: 'Bad Token'}, status: 401
+          @user = User.create(tg_id: user_tg_id, name: JSON.parse(CGI.unescape(user_data))["username"], ava: @@avatars.sample)
         end
       else
         render json: { error: 'Bad Token'}, status: 401
