@@ -176,7 +176,6 @@ GEM
     mini_portile2 (2.8.9)
     minitest (5.25.5)
     msgpack (1.8.0)
-    multi_json (1.15.0)
     multipart-post (2.4.1)
     mutex_m (0.3.0)
     net-http (0.6.0)
@@ -267,8 +266,6 @@ GEM
     rubyzip (2.4.1)
     russian (0.6.0)
       i18n (>= 0.5.0)
-    streamio-ffmpeg (3.0.2)
-      multi_json (~> 1.8)
     stringio (3.1.7)
     telegram-bot-ruby (2.4.0)
       dry-struct (~> 1.6)
@@ -309,7 +306,6 @@ DEPENDENCIES
   rest-client
   roo
   russian
-  streamio-ffmpeg
   telegram-bot-ruby
   tzinfo-data
 
