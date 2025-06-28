@@ -25,7 +25,7 @@ class ApplicationController < ActionController::API
         description: "Премиум аккаунт в MemCulture",
         payload: @user.id,
         currency: 'XTR',
-        prices: [{label: 'Цена', amount: 1}]
+        prices: [{ label: 'Цена', amount: 199 }]
       }
 
       response = telegram_request("createInvoiceLink", params)

@@ -340,21 +340,21 @@ function disconnectWebSocket() {
   
   console.log('🔌 [disconnectWebSocket] Cleanup completed');
 }
-eruda.init()
-let logger = eruda.get('console');
+//eruda.init()
+//let logger = eruda.get('console');
 
 function showUserInfo(){
-  logger.log('eruda');
-  logger.log("initData ", Telegram.WebApp.initData)
-  logger.log("initDataUnsafe ", Telegram.WebApp.initDataUnsafe)
-  logger.log("initData user ", Telegram.WebApp.initDataUnsafe.user)
-
-  logger.log("href ", window.location.href)
-  logger.log("WebAppInitData1 ", Telegram.WebAppInitData)
-  logger.log("WebAppInitData2 ", Telegram.webAppInitData)
-  logger.log("WebAppInitData3 ", Telegram.webAppInitDataUnsafe)
-  logger.log("WebView ", Telegram.WebView)
-  logger.log("Telegram ", Telegram)
+  //logger.log('eruda');
+  //logger.log("initData ", Telegram.WebApp.initData)
+  //logger.log("initDataUnsafe ", Telegram.WebApp.initDataUnsafe)
+  //logger.log("initData user ", Telegram.WebApp.initDataUnsafe.user)
+//
+  //logger.log("href ", window.location.href)
+  //logger.log("WebAppInitData1 ", Telegram.WebAppInitData)
+  //logger.log("WebAppInitData2 ", Telegram.webAppInitData)
+  //logger.log("WebAppInitData3 ", Telegram.webAppInitDataUnsafe)
+  //logger.log("WebView ", Telegram.WebView)
+  //logger.log("Telegram ", Telegram)
 
   
 }
@@ -1506,7 +1506,7 @@ document.getElementById('current_dollars').addEventListener('click', () => {
 
 drawChart()
 function drawChart() {
-  const labels = ['14.01', '30.01', '14.02', '28.02', '14.03', '30.03', '15.04', '30.04',  '15.05', '30.05',  '15.06', '30.06' ];
+  const labels = ['14.06', '30.06', '14.07', '30.07', '14.08', '30.08', '14.09', '30.09',  '15.10', '30.10',  '15.11', '30.11' ];
   const data = {
     labels: labels,
     datasets: [
