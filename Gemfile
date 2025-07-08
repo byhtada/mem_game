@@ -24,6 +24,8 @@ gem 'rest-client'
 gem 'ffi', '~> 1.9', '>= 1.9.10'
 gem 'russian'
 
+gem 'httparty'
+
 gem 'delayed_job_active_record'
 gem 'daemons'
 gem 'dotenv-rails'

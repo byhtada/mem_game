@@ -590,6 +590,13 @@ function handleGameUpdate(data) {
   setGameUsers(data.users)
   setUsersReady(data.game, data.users)
 
+  cacheUserFiles(data.my_mems)
+
+  data.users.forEach(user => {
+    cacheUserFiles(user.mems)
+  })
+
+
   if (data.ready_to_start) {
     console.log("🎯 [handleGameUpdate] Game is ready to start! Starting game...")
     setTimeout(() => {
@@ -1564,6 +1571,166 @@ document.getElementById('btn_converter').addEventListener('click', () => {
     .catch(err => console.log(err))
 
 })
+
+
+function cacheUserFiles(mems){
+  let imgs = []
+  let videos = []
+
+  mems.forEach(mem => {
+    imgs.push(`https://s3.regru.cloud/mem-assets/covers_small/${mem}.webp`)
+    videos.push(`https://s3.regru.cloud/mem-assets/videos_small/${mem}.mp4`)
+  })
+
+  console.log('📋 Файлы для предзагрузки:', { imgs: imgs.length, videos: videos.length })
+
+  // Предзагружаем изображения и видео
+  // Примечание: внешние ресурсы могут блокироваться CORS политикой,
+  // но функция cacheFiles автоматически использует fallback методы
+  cacheFiles(imgs, 'mem-images-cache')
+  cacheFiles(videos, 'mem-videos-cache')
+}
+
+/**
+ * Функция для кэширования файлов перед их использованием в интерфейсе
+ * @param {string|Array<string>} urls - URL файла или массив URL файлов для кэширования
+ * @param {string} cacheName - Название кэша (по умолчанию 'game-cache')
+ * @returns {Promise} - Промис, который выполняется после кэширования всех файлов
+ * 
+ * Примеры использования:
+ * 
+ * // Кэширование одного файла
+ * cacheFiles('assets/mem_img/gif/mem_20.gif');
+ * 
+ * // Кэширование массива файлов
+ * cacheFiles([
+ *   'assets/mem_img/gif/mem_1.gif',
+ *   'assets/mem_img/svg/mem_10.svg',
+ *   'https://s3.regru.cloud/mem-assets/videos_small/mem_001.mp4'
+ * ]);
+ * 
+ * // Кэширование с указанием названия кэша
+ * cacheFiles(['file1.jpg', 'file2.mp4'], 'my-custom-cache');
+ * 
+ * // Использование с async/await
+ * async function preloadGameAssets() {
+ *   await cacheFiles([
+ *     'assets/mem_img/gif/mem_20.gif',
+ *     'assets/mem_img/gif/mem_98.gif',
+ *     'assets/mem_img/gif/mem_75.gif'
+ *   ]);
+ *   console.log('Все ресурсы загружены в кэш!');
+ * }
+ */
+async function cacheFiles(urls, cacheName = 'game-cache') {
+  try {
+    // Проверяем поддержку Cache API
+    if (!('caches' in window)) {
+      console.warn('🚫 Cache API не поддерживается в этом браузере');
+      return Promise.resolve();
+    }
+
+    // Нормализуем входные данные в массив
+    const urlsArray = Array.isArray(urls) ? urls : [urls];
+    
+    // Фильтруем пустые URL
+    const validUrls = urlsArray.filter(url => url && typeof url === 'string');
+    
+    if (validUrls.length === 0) {
+      console.warn('⚠️ Не переданы корректные URL для кэширования');
+      return Promise.resolve();
+    }
+
+    // Открываем кэш
+    const cache = await caches.open(cacheName);
+    
+    // Проверяем, какие файлы уже есть в кэше
+    const cachedRequests = await cache.keys();
+    const cachedUrls = cachedRequests.map(request => request.url);
+    
+    // Определяем файлы, которые нужно закэшировать
+    const urlsToCache = validUrls.filter(url => {
+      const fullUrl = url.startsWith('http') ? url : window.location.origin + '/' + url.replace(/^\//, '');
+      return !cachedUrls.some(cachedUrl => cachedUrl === fullUrl);
+    });
+    
+    if (urlsToCache.length === 0) {
+      console.log('✅ Все файлы уже находятся в кэше');
+      return Promise.resolve();
+    }
+
+    console.log(`📥 Кэшируем ${urlsToCache.length} файлов:`, urlsToCache);
+
+    // Кэшируем файлы параллельно
+    const cachePromises = urlsToCache.map(async (url) => {
+      try {
+        // Определяем, внешний ли это URL
+        const isExternal = url.startsWith('http') && !url.startsWith(window.location.origin);
+        
+        let response;
+        if (isExternal) {
+          // Для внешних URL используем no-cors режим, чтобы обойти CORS ограничения
+          response = await fetch(url, { 
+            mode: 'no-cors',
+            cache: 'force-cache' // Пытаемся использовать браузерный кэш если возможно
+          });
+        } else {
+          // Для локальных файлов используем обычный fetch
+          response = await fetch(url);
+        }
+        
+        // В no-cors режиме response.ok всегда undefined, поэтому проверяем type
+        if (response.type === 'opaque' || response.ok) {
+          await cache.put(url, response.clone());
+          console.log(`✅ Файл закэширован: ${url}`);
+        } else if (!isExternal) {
+          console.warn(`⚠️ Ошибка загрузки файла: ${url} (статус: ${response.status})`);
+        }
+      } catch (error) {
+        // Если это CORS ошибка для внешнего ресурса, пробуем альтернативный подход
+        if (error.message.includes('fetch') && url.startsWith('http')) {
+          try {
+            // Создаем Image объект для предзагрузки (работает для изображений)
+            if (url.includes('.webp') || url.includes('.jpg') || url.includes('.png') || url.includes('.gif')) {
+              const img = new Image();
+              img.crossOrigin = 'anonymous';
+              await new Promise((resolve, reject) => {
+                img.onload = resolve;
+                img.onerror = reject;
+                img.src = url;
+              });
+              console.log(`🖼️ Изображение предзагружено: ${url}`);
+            } else if (url.includes('.mp4') || url.includes('.webm') || url.includes('.mov')) {
+              // Для видео файлов создаем video элемент
+              const video = document.createElement('video');
+              video.crossOrigin = 'anonymous';
+              video.preload = 'metadata';
+              video.muted = true;
+              await new Promise((resolve, reject) => {
+                video.onloadedmetadata = resolve;
+                video.onerror = reject;
+                video.src = url;
+              });
+              console.log(`🎥 Видео предзагружено: ${url}`);
+            } else {
+              console.warn(`⚠️ Не удалось кэшировать внешний ресурс (CORS): ${url}`);
+            }
+          } catch (secondError) {
+            console.warn(`⚠️ Не удалось предзагрузить ресурс: ${url}`);
+          }
+        } else {
+          console.error(`❌ Ошибка кэширования файла: ${url}`, error);
+        }
+      }
+    });
+
+    await Promise.allSettled(cachePromises);
+    console.log('🎉 Кэширование завершено');
+    
+  } catch (error) {
+    console.error('❌ Ошибка в функции cacheFiles:', error);
+  }
+}
 
 
 function sendRequest(type, url, body = null) {

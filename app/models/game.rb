@@ -92,8 +92,13 @@ class Game < ApplicationRecord
     return existing_round if existing_round.present?
 
     self.update(current_round: new_round)
+
+    question_id = Question.pluck(:id).sample
+    question_text = Question.find(question_id).text
+
     round = Round.create!(game_id: self.id,
-                         question_text: Question.pluck(:text).sample(1)[0],
+                         question_id: question_id,
+                         question_text: question_text,
                          round_num: new_round)
 
     Rails.logger.info "🎮 [Game#create_round] Round created #{round.id} #{round.round_num}"
@@ -234,7 +239,8 @@ class Game < ApplicationRecord
         game_user_number: game_user.game_user_number,
         game_points: game_user.game_points,
         ready_to_restart: game_user.ready_to_restart,
-        bot: game_user.bot
+        bot: game_user.bot,
+        mems: JSON.parse(game_user.mem_names).pluck("name")
       }
     end
   end

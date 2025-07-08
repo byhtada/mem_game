@@ -42,12 +42,14 @@ class GameChannel < ApplicationCable::Channel
     # Отправляем обновление только текущему пользователю при подписке
     users = GameUsersService.new(game, current_user).call
     
+    my_mems = JSON.parse(GameUser.find_by(game_id: game.id, user_id: current_user.id).mem_names).pluck("name")
+
     data = {
       ready_to_start: game.ready_to_start,
       ready_progress_wait: game.ready_progress_wait,
       users: users,
       game: game.as_json,
-      my_mems: []
+      my_mems:
     }
     
     Rails.logger.info "📤 [GameChannel#send_game_update] Data: #{data.inspect}"

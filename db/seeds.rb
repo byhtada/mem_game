@@ -58,7 +58,8 @@ def create_questions
     Question.create(
       style: row_cells[1],
       adult: row_cells[0] == "18+",
-      text:  row_cells[2]
+      text:  row_cells[2],
+      context: row_cells[3]
       )
   end
   puts "Questions created"
@@ -75,7 +76,9 @@ def upload_mems
       name_ru: mem['mem_name_ru'],
 
       link_image: "https://s3.regru.cloud/mem-assets/covers/#{file_name}.webp",
-      link_video: "https://s3.regru.cloud/mem-assets/videos/#{file_name}.mp4"
+      link_video: "https://s3.regru.cloud/mem-assets/videos/#{file_name}.mp4",
+
+      context: mem['context']
     )
   end
 end

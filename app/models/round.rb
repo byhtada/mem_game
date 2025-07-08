@@ -1,10 +1,11 @@
 # frozen_string_literal: true
 
 class Round < ApplicationRecord
-  ROUND_DURATION = 40
-  VOTE_DURATION = 20
+  ROUND_DURATION = 20
+  VOTE_DURATION = 10
 
   belongs_to :game
+  has_one :question
 
   enum state: {
     play: 'play',

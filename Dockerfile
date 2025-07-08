@@ -10,7 +10,7 @@ LABEL fly_launch_runtime="rails"
 WORKDIR /rails
 
 # Set development environment
-ENV BUNDLE_PATH="/usr/local/bundle" \
+ENV BUNDLE_PATH="/rails/vendor/bundle" \
     RAILS_ENV="development"
 
 # Update gems and bundler
@@ -64,6 +64,8 @@ FROM base
 # Install packages needed for deployment AND Node.js for development
 RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y \
+    build-essential \
+    libpq-dev \
     curl \
     postgresql-client \
     gnupg2 && \
@@ -71,8 +73,7 @@ RUN apt-get update -qq && \
     apt-get install -y nodejs && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
-# Copy built artifacts: gems, application
-COPY --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
+# Copy built artifacts: gems, application  
 COPY --from=build /rails /rails
 
 # Run and own only the runtime files as a non-root user for security
@@ -80,8 +81,8 @@ RUN groupadd --system --gid 1000 rails && \
     useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash && \
     chown -R 1000:1000 db log storage tmp bin && \
     chmod +x /rails/bin/*
-USER 1000:1000
+# USER 1000:1000  # Закомментировано для разработки - запускаем от root
 
 # Start the server by default, this can be overwritten at runtime
 EXPOSE 3000
-CMD ["./bin/rails", "server", "-b", "0.0.0.0"]
+CMD ["bundle", "exec", "rails", "server", "-b", "0.0.0.0"]

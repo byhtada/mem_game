@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_06_28_145109) do
+ActiveRecord::Schema[7.1].define(version: 2025_07_08_181212) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -68,6 +68,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_06_28_145109) do
     t.string "name_ru"
     t.string "link_video"
     t.string "link_image"
+    t.jsonb "context", default: []
   end
 
   create_table "questions", force: :cascade do |t|
@@ -76,6 +77,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_06_28_145109) do
     t.string "text"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "context"
   end
 
   create_table "rounds", force: :cascade do |t|
