@@ -47,6 +47,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      web:
+        condition: service_started
     environment:
       DATABASE_URL: postgres://postgres:password@db:5432/memgame_development
       RAILS_ENV: development
@@ -57,7 +59,11 @@ services:
       - bundle_cache:/usr/local/bundle
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
-    command: ["bundle", "exec", "rails", "jobs:work"]
+    command: >
+      bash -c "
+        bundle install &&
+        bundle exec rails jobs:work
+      "
 
   # Frontend watcher для автоматической пересборки
   frontend_watcher:

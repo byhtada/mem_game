@@ -5,7 +5,7 @@ class BotRoundJob < ApplicationJob
 
     Rails.logger.info "🤖 [BotRoundJob] #{Time.now.to_f} Starting job for round #{round_id} and game_user #{game_user_id}"
     
-    question_context = round.question.context
+    question_context = Question.find(round.question_id).context
     mems = Mem.where("jsonb_exists(context, ?)", question_context)
 
     if mems.empty?
